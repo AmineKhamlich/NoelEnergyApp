@@ -32,7 +32,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current // Necessari per mostrar missatges tipus "Toast"
     val scope = rememberCoroutineScope() // Crea l'espai per executar corutines
@@ -130,6 +131,9 @@ fun LoginScreen(
                                         "Benvingut ${loginResponse?.nom}",
                                         Toast.LENGTH_SHORT
                                     ).show()
+
+                                    // CRIDEM AL CALLBACK! Això avisarà a la MainActivity perquè ens mogui de pantalla
+                                    onLoginSuccess()
 
                                     // Proper pas: Guardar el token i navegar el Dashborad
                                 } else {

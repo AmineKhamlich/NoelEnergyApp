@@ -29,6 +29,16 @@ class SessionManager(context: Context) {
         return prefs.getString(USER_TOKEN, null)
     }
 
+    // Funció per obtenir el nom
+    fun fetchUserName(): String? {
+        return prefs.getString(USER_NAME, null)
+    }
+
+    // Funció per obtenir el rol
+    fun fetchUserRole(): String? {
+        return prefs.getString(USER_ROLE, null)
+    }
+
     // Funció per fer logout (esborrar tot)
     fun clearUserData() {
         prefs.edit {
