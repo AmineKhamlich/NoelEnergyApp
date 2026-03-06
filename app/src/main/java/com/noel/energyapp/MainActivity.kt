@@ -15,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.noel.energyapp.navigation.Screen
 import com.noel.energyapp.ui.dashboard.DashboardScreen
+import com.noel.energyapp.ui.login.ForgotPasswordScreen
 import com.noel.energyapp.ui.login.LoginScreen
 import com.noel.energyapp.ui.theme.NoelEnergyAppTheme
 import com.noel.energyapp.util.SessionManager
@@ -49,7 +50,7 @@ class MainActivity : ComponentActivity() {
                         // RUTA 1: LOGIN
                         composable(Screen.Login.route) {
                             LoginScreen(
-                                padding,
+                                paddingValues = padding,
                                 onLoginSuccess = {
                                     // Quan el login és correcte, anem al Dashboard
                                     // popUpTo("login") { inclusive = true } serveix per esborrar
@@ -57,13 +58,29 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.Dashboard.route) {
                                         popUpTo(Screen.Login.route) { inclusive = true }
                                     }
+                                },
+                                onForgotPasswordClick = {
+                                    // Quan cliquem, anem a la pantalla de recuperar
+                                    navController.navigate(Screen.ForgotPassword.route)
                                 }
                             )
                         }
 
-                        // RUTA 2: DASHBOARD
+                        // RUTA 2: RECUPERAR CONTRASENYA
+                        composable(Screen.ForgotPassword.route) {
+                            ForgotPasswordScreen(
+                                paddingValues = padding,
+                                onBackToLogin = {
+                                    // Simplement tornem enrere a la pila de navegació
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        // RUTA 3: DASHBOARD
                         composable(Screen.Dashboard.route) {
                             DashboardScreen(
+                                paddingValues = padding,
                                 userName = sessionManager.fetchUserName(),
                                 onLogout = {
                                     // Quan tanquem sessió, esborrem dades i tornem al Login
@@ -78,21 +95,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    NoelEnergyAppTheme {
-        Greeting("Android")
     }
 }

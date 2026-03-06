@@ -9,11 +9,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,8 +30,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.noel.energyapp.data.LoginRequest
 import com.noel.energyapp.network.RetrofitClient
@@ -33,10 +45,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     paddingValues: PaddingValues,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onForgotPasswordClick: () -> Unit // NOU: Callback per navegar a la pantalla de recuperació
 ) {
     val context = LocalContext.current // Necessari per mostrar missatges tipus "Toast"
     val scope = rememberCoroutineScope() // Crea l'espai per executar corutines
+
+    // --- MILLORA DEL TECLAT: Creem el FocusRequester per saltar d'un camp a l'altre ---
+    val passwordFocusRequester = remember { FocusRequester() }
 
     // Variables per guardar el que l'usuari escriu
     var username by remember { mutableStateOf("") }
@@ -46,37 +62,80 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Variable per mostrar la contrasenya si l'usuari vol
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(16.dp),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "NOEL ENERGY", style = MaterialTheme.typography.headlineMedium)
+        // --- 1. LOGOTIP O TÍTOL DESTACAT ---
+        // Aquí podríem carregar una Image(painterResource(R.drawable.logo_noel)...)
+        Text(
+            text = "NOEL",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "ENERGY MANAGEMENT",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // Camp d'usuari
+        // -- 2. CAMP D'USUARI ---
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
             label = { Text("Usuari") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading // Desactivat mentre està carregant
+            enabled = !isLoading, // Desactivat mentre està carregant
+            singleLine = true, // Evita que es facin salts de linia
+            // MILLORA TECLAT: Posem acció de "Next"
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(
+                onNext = { passwordFocusRequester.requestFocus() } // Salta al password
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Camp de Contrasenya
+        // --- 3. CAMP DE CONTRASENYA AMB ULL ---
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Contrasenya") },
-            visualTransformation = PasswordVisualTransformation(), // Amaga els caràcters
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading // Desactivat mentre està carregant
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(passwordFocusRequester),
+            enabled = !isLoading, // Desactivat mentre està carregant
+            singleLine = true, // Evita que es facin salts de linia
+            // Lògica per mostrar/amagar contrasenya (substitueix el PasswordVisualTransformation fix anterior)
+            visualTransformation = if (passwordVisible)
+                VisualTransformation.None
+            else
+                PasswordVisualTransformation(),
+            // MILLORA TECLAT: Posem acció de "Done" (fet)
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = { /* Aquí podríem executar el login directament si volguéssim */ }
+            ),
+            trailingIcon = {
+                // Triem la icona segons l'estat de passwordVisible
+                val image = if (passwordVisible)
+                    Icons.Filled.Visibility
+                else
+                    Icons.Filled.VisibilityOff
+
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = "Mostrar contrasenya")
+                }
+            }
         )
 
         // Si hi ha un error, el mostrem en vermell
@@ -91,6 +150,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // --- 4. BOTÓ D'ENTRAR ---
         if (isLoading) {
             // Mostrem una rodeta de càrrega mentre esperem l'API
             CircularProgressIndicator()
@@ -135,22 +195,35 @@ fun LoginScreen(
                                     // CRIDEM AL CALLBACK! Això avisarà a la MainActivity perquè ens mogui de pantalla
                                     onLoginSuccess()
 
-                                    // Proper pas: Guardar el token i navegar el Dashborad
                                 } else {
                                     errorMessage = "Usuari o contrasenya incorrectes"
                                 }
                             } catch (e: Exception) {
                                 // Error de xarxa (servidor apagat, port tancat, etc.)
-                                errorMessage = "Error de connexió: ${e.localizedMessage}"
+                                errorMessage = "Error de connexió al servidor"
                             } finally {
                                 isLoading = false
                             }
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium, // Cantons arrodonits per a un disseny més modern
             ) {
-                Text("Entrar")
+                Text("INICIAR SESSIÓ")
+            }
+
+            // --- 5. BOTÓ RECUPERAR CONTRASENYA ---
+            TextButton(
+                onClick = { onForgotPasswordClick() }, // Crida la navegació a ForgotPasswordScreen
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text(
+                    text = "He oblidat la meva contrasenya",
+                    color = MaterialTheme.colorScheme.secondary
+                )
             }
         }
     }

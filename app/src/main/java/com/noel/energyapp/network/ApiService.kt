@@ -20,4 +20,7 @@ interface ApiService {
     @GET("Planta")
     suspend fun getPlantes(@Header("Authorization") token: String): Response<List<PlantaDto>>
 
+    //
+    @POST("Usuari/reset-password")
+    suspend fun resetPassword(@Body body: Map<String, String>): Response<Void>
 }

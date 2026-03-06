@@ -5,4 +5,6 @@ package com.noel.energyapp.navigation
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Dashboard : Screen("dashboard")
+    object ForgotPassword : Screen("forgot_password")
+
 }

@@ -62,4 +62,5 @@ dependencies {
     implementation(libs.jbcrypt)
     // Navegació: Per poder saltar del Login al Dashboard
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
 }

@@ -2,6 +2,7 @@ package com.noel.energyapp.ui.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,8 +36,13 @@ import com.noel.energyapp.util.SessionManager
 import kotlin.collections.emptyList
 
 @OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
-fun DashboardScreen(onLogout: () -> Unit, userName: String?) {
+fun DashboardScreen(
+    paddingValues: PaddingValues,
+    onLogout: () -> Unit,
+    userName: String?
+) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
 
