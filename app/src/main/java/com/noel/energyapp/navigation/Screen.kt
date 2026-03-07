@@ -7,4 +7,8 @@ sealed class Screen(val route: String) {
     object Dashboard : Screen("dashboard")
     object ForgotPassword : Screen("forgot_password")
 
+    // Ruta per al detall de la planta que demana dos paràmetres (ID i Nom)
+    object PlantaDetail : Screen("planta_detail/{plantaId}/{plantaNom}") {
+        fun createRoute(plantaId: Int, plantaNom: String) = "planta_detail/$plantaId/$plantaNom"
+    }
 }

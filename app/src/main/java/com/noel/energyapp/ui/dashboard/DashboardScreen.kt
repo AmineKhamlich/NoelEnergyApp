@@ -1,5 +1,6 @@
 package com.noel.energyapp.ui.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 fun DashboardScreen(
     paddingValues: PaddingValues,
     onLogout: () -> Unit,
+    onPlantaClick: (Int, String) -> Unit, // Què passa quan cliquem una planta?
     userName: String?
 ) {
     val context = LocalContext.current
@@ -75,7 +77,10 @@ fun DashboardScreen(
             ) {
                 items(plantes) { planta ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                            .clickable { onPlantaClick(planta.id_planta, planta.nom_planta) },
                         shape = MaterialTheme.shapes.medium
                     ) {
                         Row(
