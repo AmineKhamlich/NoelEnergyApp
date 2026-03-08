@@ -16,13 +16,14 @@ import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
 import com.noel.energyapp.util.SessionManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun DashboardScreen(
     paddingValues: PaddingValues,
     onLogout: () -> Unit,
-    onPlantaClick: (Int, String) -> Unit, // Què passa quan cliquem una planta?
+    onNavigateToGestioPlantes: () -> Unit,
+    onNavigateToGestioUsuaris: () -> Unit,
+    onPlantaClick: (Int, String) -> Unit,
     userName: String?
 ) {
     val context = LocalContext.current
@@ -32,6 +33,10 @@ fun DashboardScreen(
     var plantes by remember { mutableStateOf<List<PlantaDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
+    // Obtenim el Rol i les Plantes directament del telèfon (molt ràpid)
+    val userRole = sessionManager.fetchUserRole() ?: ""
+    val assignedPlants = sessionManager.fetchAssignedPlants()
+
     // El LaunchedEffect s'executa automàticament en obrir la pantalla
     LaunchedEffect(Unit) {
         val token = sessionManager.fetchAuthToken()
@@ -39,7 +44,19 @@ fun DashboardScreen(
             try {
                 val response = RetrofitClient.instance.getPlantes("Bearer $token")
                 if (response.isSuccessful) {
-                    plantes = response.body() ?: emptyList()
+                    val totesLesPlantes = response.body() ?: emptyList()
+
+                    // --- EL FILTRE INTEL·LIGENT ---
+                    plantes = totesLesPlantes.filter { planta ->
+                        // 1. La planta ha d'estar activa al sistema (Gestió de Plantes)
+                        val isActiva = planta.activa
+
+                        // 2. Ha de ser ADMIN, o bé, tenir l'ID de la planta a la seva llista
+                        val isAssignada = userRole.equals("ADMIN", ignoreCase = true) ||
+                                assignedPlants.contains(planta.id_planta)
+
+                        isActiva && isAssignada
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -56,6 +73,9 @@ fun DashboardScreen(
         paddingValues = paddingValues,
         title = "NOEL ENERGY",
         hasMenu = true, // Això fa aparèixer l'hamburguesa i activa el lateral
+        // --- 2. NOU: LI PASSEM LES ORDRES A LA PLANTILLA PERQUÈ SÀPIGA QUÈ FER ---
+        onNavigateToGestioPlantes = onNavigateToGestioPlantes,
+        onNavigateToGestioUsuaris = onNavigateToGestioUsuaris,
         verticalArrangement = Arrangement.Top // Al Dashboard volem que tot vagi cap a dalt
     ) {
         // Salutació alineada a l'esquerra
@@ -69,6 +89,15 @@ fun DashboardScreen(
         if (isLoading) {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
+            }
+        } else if (plantes.isEmpty()) {
+            // Missatge si l'usuari no té cap planta assignada o totes estan apagades
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "No tens cap planta activa assignada.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
             }
         } else {
             // LazyColumn és com el RecyclerView d'Android, ideal per llistes llargues

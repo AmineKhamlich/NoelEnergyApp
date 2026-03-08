@@ -11,4 +11,11 @@ sealed class Screen(val route: String) {
     object PlantaDetail : Screen("planta_detail/{plantaId}/{plantaNom}") {
         fun createRoute(plantaId: Int, plantaNom: String) = "planta_detail/$plantaId/$plantaNom"
     }
-}
+
+    // Rutes per als apartats d'Administració
+    object GestioPlantes : Screen("gestio_plantes")
+    object GestioUsuaris : Screen("gestio_usuaris")
+
+    // Ruta per el canvi de contrasenya obligatori
+    object ChangePassword : Screen("change_password")
+    }

@@ -1,5 +1,7 @@
 package com.noel.energyapp.network
 
+import com.noel.energyapp.data.ChangePasswordRequest
+import com.noel.energyapp.data.GenericResponse
 import com.noel.energyapp.data.LoginRequest
 import com.noel.energyapp.data.LoginResponse
 import com.noel.energyapp.data.PlantaDto
@@ -23,4 +25,11 @@ interface ApiService {
     //
     @POST("Usuari/reset-password")
     suspend fun resetPassword(@Body body: Map<String, String>): Response<Void>
+
+    //  Endpoint per canviar la contrasenya obligatòria
+    @POST("Usuari/change-password")
+    suspend fun changePassword(
+        @Header("Authorization") token: String,
+        @Body request: ChangePasswordRequest
+    ): Response<GenericResponse>
 }

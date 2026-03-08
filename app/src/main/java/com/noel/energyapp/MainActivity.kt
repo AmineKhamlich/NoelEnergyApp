@@ -16,9 +16,12 @@ import com.noel.energyapp.navigation.Screen
 import com.noel.energyapp.ui.dashboard.DashboardScreen
 import com.noel.energyapp.ui.login.ForgotPasswordScreen
 import com.noel.energyapp.ui.login.LoginScreen
+import com.noel.energyapp.ui.login.ChangePasswordScreen // NOU IMPORT
 import com.noel.energyapp.ui.planta.PlantaDetailScreen
 import com.noel.energyapp.ui.theme.NoelEnergyAppTheme
 import com.noel.energyapp.util.SessionManager
+import com.noel.energyapp.ui.planta.GestioPlantesScreen
+import com.noel.energyapp.ui.usuaris.GestioUsuarisScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,12 +37,16 @@ class MainActivity : ComponentActivity() {
                 // Aquest objecte és el "director" de l'App.
                 val navController = rememberNavController()
 
-                // 3. Decidim quina és la pantalla inicial (Login o Dashboard)
-                // Si el token no és nul, vol dir que ja estem loguejats i saltem el Login.
+                // 3. Decidim quina és la pantalla inicial (Login, Dashboard o Canvi de Contrasenya)
+                // LÒGICA ANTIBALES: Si té token, comprovem si està bloquejat pel canvi de contrasenya.
                 val startDestination = if (sessionManager.fetchAuthToken() != null) {
-                    Screen.Dashboard.route
+                    if (sessionManager.fetchMustChangePassword()) {
+                        Screen.ChangePassword.route // Està bloquejat! A la presó del canvi de contrasenya.
+                    } else {
+                        Screen.Dashboard.route // Tot OK, al Dashboard!
+                    }
                 } else {
-                    Screen.Login.route
+                    Screen.Login.route // No té token, al Login.
                 }
 
                 // El Scaffold principal ens dona els 'paddingValues' (l'espai de la bateria i els botons de baix)
@@ -55,12 +62,17 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.Login.route) {
                             LoginScreen(
                                 paddingValues = padding, // Passem el marge per no tapar el rellotge
-                                onLoginSuccess = {
-                                    // Quan el login és correcte, anem al Dashboard
-                                    // popUpTo(Screen.Login.route) serveix per esborrar
-                                    // la pantalla de login de l'historial (perquè al fer "Enrere" no tornem al login)
-                                    navController.navigate(Screen.Dashboard.route) {
-                                        popUpTo(Screen.Login.route) { inclusive = true }
+                                onLoginSuccess = { requiresPasswordChange -> // NOU: Rebem el boolean per saber on enviar-lo
+                                    if (requiresPasswordChange) {
+                                        // Va a la pantalla de canvi de contrasenya
+                                        navController.navigate(Screen.ChangePassword.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        }
+                                    } else {
+                                        // Quan el login és correcte i no ha de canviar res, anem al Dashboard com sempre
+                                        navController.navigate(Screen.Dashboard.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        }
                                     }
                                 },
                                 onForgotPasswordClick = {
@@ -98,7 +110,11 @@ class MainActivity : ComponentActivity() {
                                     // Naveguem a la pantalla de detall construint la ruta dinàmica
                                     // Exemple resultant: "planta_detail/3/Noel-1"
                                     navController.navigate(Screen.PlantaDetail.createRoute(id, nom))
-                                }
+                                },
+                                // Li hem de passar aquestes accions al Dashboard perquè aquest
+                                // les passi a la plantilla NoelScreen.
+                                onNavigateToGestioPlantes = { navController.navigate(Screen.GestioPlantes.route) },
+                                onNavigateToGestioUsuaris = { navController.navigate(Screen.GestioUsuaris.route) }
                             )
                         }
 
@@ -123,6 +139,54 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = {
                                     // Tornem enrere al Dashboard utilitzant la fletxa de la TopBar
                                     navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        // --- RUTA 5: GESTIÓ DE PLANTES ---
+                        composable(Screen.GestioPlantes.route) {
+                            GestioPlantesScreen(
+                                paddingValues = padding,
+                                onBackClick = { navController.popBackStack() },
+                                onNavigateToGestioPlantes = { /* Ja som aquí, no fem res */ },
+                                onNavigateToGestioUsuaris = {
+                                    navController.navigate(Screen.GestioUsuaris.route) {
+                                        popUpTo (Screen.Dashboard.route)
+                                    }
+                                }
+                            )
+                        }
+
+                        // --- RUTA 6: GESTIÓ D'USUARIS ---
+                        composable(Screen.GestioUsuaris.route) {
+                            GestioUsuarisScreen(
+                                paddingValues = padding,
+                                onBackClick = { navController.popBackStack() },
+                                onNavigateToGestioUsuaris = { /* Ja som aquí, no fem res */ },
+                                onNavigateToGestioPlantes = {
+                                    navController.navigate(Screen.GestioPlantes.route) {
+                                        popUpTo(Screen.Dashboard.route)
+                                    }
+                                }
+                            )
+                        }
+
+                        // --- RUTA 7: CANVI DE CONTRASENYA OBLIGATORI ---
+                        composable(Screen.ChangePassword.route) {
+                            ChangePasswordScreen(
+                                paddingValues = padding,
+                                onPasswordChangedSuccessfully = {
+                                    // Quan ho fa bé, viatja al Dashboard i esborra la pantalla actual de l'historial
+                                    navController.navigate(Screen.Dashboard.route) {
+                                        popUpTo(Screen.ChangePassword.route) { inclusive = true }
+                                    }
+                                },
+                                onLogoutClick = {
+                                    // Si es penedeix i no vol canviar la contrasenya, l'esborrem i el tirem al Login
+                                    sessionManager.clearUserData()
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(0) { inclusive = true } // popUpTo(0) buida TOT l'historial
+                                    }
                                 }
                             )
                         }

@@ -1,41 +1,20 @@
 package com.noel.energyapp.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,12 +25,20 @@ fun NoelScreen(
     verticalArrangement: Arrangement.Vertical = Arrangement.Center,
     onBackClick: (() -> Unit)? = null,
     hasMenu: Boolean = false,
+    // NOU: Afegim les accions de navegació del menú. Són opcionals (null per defecte)
+    onNavigateToGestioPlantes: (() -> Unit)? = null,
+    onNavigateToGestioUsuaris: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
     val isAppScreen = title != null
+
+    // NOU: Instanciem el SessionManager directament a la plantilla
+    // Així TOTA l'App sabrà quin rol té l'usuari sense haver de passar-ho pantalla per pantalla.
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userRole = sessionManager.fetchUserRole() ?: ""
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -71,28 +58,57 @@ fun NoelScreen(
                     )
                     HorizontalDivider()
 
+                    // Opció estàndard per a tothom
                     Text(
                         text = "⚙️ Ajustos (Pròximament)",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(16.dp)
                     )
+
+                    // MÀGIA: Només mostrem aquestes opcions si l'usuari és administrador
+                    // (Assegura't que "admin" coincideix amb el que guarda la teva BD, potser és "ADMIN")
+                    if (userRole.equals("ADMIN", ignoreCase = true)) {
+                        HorizontalDivider()
+
+                        Text(
+                            text = "🏭 Gestió de Plantes",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    // 1. Tanquem el calaix del menú
+                                    scope.launch { drawerState.close() }
+                                    // 2. Naveguem (si ens han passat la ruta)
+                                    onNavigateToGestioPlantes?.invoke()
+                                }
+                                .padding(16.dp)
+                        )
+
+                        Text(
+                            text = "👥 Gestió d'Usuaris",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    scope.launch { drawerState.close() }
+                                    onNavigateToGestioUsuaris?.invoke()
+                                }
+                                .padding(16.dp)
+                        )
+                    }
                 }
             }
         }
     ) {
+        // ... (La resta de l'Scaffold i la interfície gràfica es queda EXACTAMENT igual que abans) ...
+        // T'ho poso sencer perquè només hagis de copiar i enganxar:
         Scaffold(
             modifier = Modifier.padding(paddingValues),
-            // CORRECCIÓ: El Scaffold torna a ser fons blanc, adeu a la franja blava de baix!
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 if (title != null) {
                     CenterAlignedTopAppBar(
-                        title = {
-                            Text(
-                                text = title.uppercase(),
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                        },
+                        title = { Text(text = title.uppercase(), style = MaterialTheme.typography.titleLarge) },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             titleContentColor = Color.White,
@@ -102,22 +118,14 @@ fun NoelScreen(
                         navigationIcon = {
                             if (onBackClick != null) {
                                 IconButton(onClick = onBackClick) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Tornar enrere",
-                                        tint = Color.White
-                                    )
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Tornar", tint = Color.White)
                                 }
                             }
                         },
                         actions = {
                             if (hasMenu) {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Menu,
-                                        contentDescription = "Obrir Menú",
-                                        tint = Color.White
-                                    )
+                                    Icon(Icons.Filled.Menu, "Obrir Menú", tint = Color.White)
                                 }
                             }
                         }
@@ -125,36 +133,20 @@ fun NoelScreen(
                 }
             }
         ) { innerPadding ->
-
-            // Creem una caixa que contingui el fons i el contingut
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                // Truc de disseny: Pintem un quadrat blau només a dalt de tot
-                // Això es veurà a través dels cantons arrodonits de la targeta blanca
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                 if (isAppScreen) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp) // Només cal un tros petit
-                            .background(MaterialTheme.colorScheme.primary)
-                    )
+                    Box(modifier = Modifier.fillMaxWidth().height(50.dp).background(MaterialTheme.colorScheme.primary))
                 }
-
-                // CORRECCIÓ: Utilitzem un Surface.
-                // Surface és intel·ligent: si ell és blanc, les lletres de dins seran negres automàticament.
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = if (isAppScreen) RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp) else RoundedCornerShape(0.dp),
-                    color = MaterialTheme.colorScheme.background // Blanc
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 24.dp)
-                            .padding(top = if (isAppScreen) 24.dp else 0.dp), // Aire superior per no tocar la corba
+                            .padding(top = if (isAppScreen) 24.dp else 0.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = verticalArrangement
                     ) {

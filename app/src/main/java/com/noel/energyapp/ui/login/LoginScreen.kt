@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     paddingValues: PaddingValues,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (Boolean) -> Unit,
     onForgotPasswordClick: () -> Unit // NOU: Callback per navegar a la pantalla de recuperació
 ) {
     val context = LocalContext.current // Necessari per mostrar missatges tipus "Toast"
@@ -135,9 +135,18 @@ fun LoginScreen(
                             if (response.isSuccessful) {
                                 val loginResponse = response.body()
                                 val sessionManager = com.noel.energyapp.util.SessionManager(context)
-                                loginResponse?.let { sessionManager.saveUserData(it.token, it.nom, it.rol) }
+
+                                loginResponse?.let { res ->
+                                    sessionManager.saveUserData(
+                                        token = res.token,
+                                        name = res.nom,
+                                        role = res.rol,
+                                        assignedPlants = res.idsPlantes.joinToString(","),
+                                        mustChangePassword = res.canviPasswordObligatori
+                                    )
+                                }
                                 Toast.makeText(context, "Benvingut ${loginResponse?.nom}", Toast.LENGTH_SHORT).show()
-                                onLoginSuccess()
+                                onLoginSuccess(res.canviPasswordObligatori)
                             } else {
                                 errorMessage = "Usuari o contrasenya incorrectes"
                             }
