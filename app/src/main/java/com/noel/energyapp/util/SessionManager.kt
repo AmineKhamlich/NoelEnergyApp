@@ -20,15 +20,15 @@ class SessionManager(context: Context) {
 
     /**
      * Guarda TOTA la informació del login de cop.
-     * Utilitzar un sol bloc 'edit' és més eficient perquè fa una sola escriptura al disc.
+     * NOU: Ara rep userId i mustChangePassword
      */
-    fun saveUserData(token: String, name: String, role: String, assignedPlants: String?) {
+    fun saveUserData(userId: Int, token: String, name: String, role: String, assignedPlants: String?, mustChangePassword: Boolean) {
         prefs.edit {
             putInt(USER_ID, userId)
             putString(USER_TOKEN, token)
             putString(USER_NAME, name)
             putString(USER_ROLE, role)
-            putString("ASSIGNED_PLANTS", assignedPlants)
+            putString(ASSIGNED_PLANTS, assignedPlants) // Corregit per utilitzar la constant
             putBoolean(MUST_CHANGE_PASSWORD, mustChangePassword)
         }
     }

@@ -138,15 +138,17 @@ fun LoginScreen(
 
                                 loginResponse?.let { res ->
                                     sessionManager.saveUserData(
+                                        userId = res.id,
                                         token = res.token,
                                         name = res.nom,
                                         role = res.rol,
                                         assignedPlants = res.idsPlantes.joinToString(","),
                                         mustChangePassword = res.canviPasswordObligatori
                                     )
+
+                                    Toast.makeText(context, "Benvingut ${res.nom}", Toast.LENGTH_SHORT).show()
+                                    onLoginSuccess(res.canviPasswordObligatori)
                                 }
-                                Toast.makeText(context, "Benvingut ${loginResponse?.nom}", Toast.LENGTH_SHORT).show()
-                                onLoginSuccess(res.canviPasswordObligatori)
                             } else {
                                 errorMessage = "Usuari o contrasenya incorrectes"
                             }
