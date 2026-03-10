@@ -33,7 +33,7 @@ fun ForgotPasswordScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text(text = "Escriu el teu usuari i et posarem la contrasenya per defecte.")
+        Text(text = "Escriu el teu usuari.")
 
         Spacer(modifier = Modifier.height(32.dp))
 

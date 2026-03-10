@@ -55,7 +55,7 @@ fun ChangePasswordScreen(
         NoelTextField(
             value = oldPassword,
             onValueChange = { oldPassword = it },
-            label = "Contrasenya Actual (ex: 123456)",
+            label = "Contrasenya Actual",
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )

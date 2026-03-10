@@ -74,24 +74,26 @@ class MainActivity : ComponentActivity() {
                                             popUpTo(Screen.Login.route) { inclusive = true }
                                         }
                                     }
-                                },
-                                onForgotPasswordClick = {
+                                }
+                                // COMENTEM AQUESTA FUNCIÓ PERQUÈ JA NO HI HA BOTÓ AL LOGIN
+                                /*
+                                , onForgotPasswordClick = {
                                     // Quan cliquem, anem a la pantalla de recuperar
                                     navController.navigate(Screen.ForgotPassword.route)
-                                }
+                                }*/
                             )
                         }
 
-                        // --- RUTA 2: RECUPERAR CONTRASENYA ---
-                        composable(Screen.ForgotPassword.route) {
-                            ForgotPasswordScreen(
-                                paddingValues = padding,
-                                onBackToLogin = {
-                                    // Simplement tornem enrere a la pila de navegació (com si preméssim el botó físic)
-                                    navController.popBackStack()
-                                }
-                            )
-                        }
+//                        // --- RUTA 2: RECUPERAR CONTRASENYA ---
+//                        composable(Screen.ForgotPassword.route) {
+//                            ForgotPasswordScreen(
+//                                paddingValues = padding,
+//                                onBackToLogin = {
+//                                    // Simplement tornem enrere a la pila de navegació (com si preméssim el botó físic)
+//                                    navController.popBackStack()
+//                                }
+//                            )
+//                        }
 
                         // --- RUTA 3: DASHBOARD ---
                         composable(Screen.Dashboard.route) {

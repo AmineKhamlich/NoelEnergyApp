@@ -35,7 +35,8 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     paddingValues: PaddingValues,
     onLoginSuccess: (Boolean) -> Unit,
-    onForgotPasswordClick: () -> Unit // NOU: Callback per navegar a la pantalla de recuperació
+    // COMENTAT: Callback per navegar a la pantalla de recuperació
+    // onForgotPasswordClick: () -> Unit // NOU: Callback per navegar a la pantalla de recuperació
 ) {
     val context = LocalContext.current // Necessari per mostrar missatges tipus "Toast"
     val scope = rememberCoroutineScope() // Crea l'espai per executar corutines
@@ -163,14 +164,14 @@ fun LoginScreen(
         )
 
         // --- 5. BOTÓ RECUPERAR CONTRASENYA ---
-        TextButton(
-            onClick = { onForgotPasswordClick() }, // Crida la navegació a ForgotPasswordScreen
-            modifier = Modifier.padding(top = 8.dp)
-        ) {
-            Text(
-                text = "He oblidat la meva contrasenya",
-                color = MaterialTheme.colorScheme.secondary
-            )
-        }
+//        TextButton(
+//            onClick = { onForgotPasswordClick() }, // Crida la navegació a ForgotPasswordScreen
+//            modifier = Modifier.padding(top = 8.dp)
+//        ) {
+//            Text(
+//                text = "He oblidat la meva contrasenya",
+//                color = MaterialTheme.colorScheme.secondary
+//            )
+//        }
     }
 }
