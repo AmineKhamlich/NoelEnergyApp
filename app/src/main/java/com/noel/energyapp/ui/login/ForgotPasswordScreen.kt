@@ -13,20 +13,40 @@ import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
 import com.noel.energyapp.ui.components.NoelTextField
+import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
 
 @Composable
 fun ForgotPasswordScreen(
     paddingValues: PaddingValues,
+    onPasswordChangedSuccessfully: () -> Unit,
     onBackToLogin: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val sessionManager = remember { SessionManager(context) }
+
+    var oldPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    // Estats per controlar la visibilitat
+    var oldPasswordVisible by remember { mutableStateOf(false) }
+    var newPasswordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
     var username by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
 
     // FEM SERVIR LA PLANTILLA MESTRE
-    NoelScreen(paddingValues = paddingValues) {
+    NoelScreen(
+        paddingValues = paddingValues,
+        title = "CANVI OBLIGATORI",
+        hasMenu = false,
+        verticalArrangement = Arrangement.Top
+    ) {
 
         Text(text = "Recuperació", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
         Text(text = "Has oblidat la contrasenya?", style = MaterialTheme.typography.labelLarge)

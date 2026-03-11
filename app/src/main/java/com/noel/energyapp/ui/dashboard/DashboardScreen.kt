@@ -17,6 +17,10 @@ import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
 import com.noel.energyapp.util.SessionManager
 
+/**
+ * Pantalla principal de l'aplicació (Dashboard).
+ * Mostra les plantes a les quals l'usuari té accés segons el seu ROL i permisos.
+ */
 @Composable
 fun DashboardScreen(
     paddingValues: PaddingValues,
@@ -24,20 +28,30 @@ fun DashboardScreen(
     onNavigateToGestioPlantes: () -> Unit,
     onNavigateToGestioUsuaris: () -> Unit,
     onPlantaClick: (Int, String) -> Unit,
-    userName: String?
+    userName: String? // Aquest és el nick que ve de la navegació
 ) {
+    // --- 1. CONFIGURACIÓ I GESTIÓ DE SESSIÓ ---
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
 
-    // Estat per guardar la llista de plantes que ens doni l'API
+    // Estats per la llista de plantes i càrrega
     var plantes by remember { mutableStateOf<List<PlantaDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Obtenim el Rol i les Plantes directament del telèfon (molt ràpid)
+    // --- 2. RECUPERACIÓ D'IDENTITAT HUMANITZADA ---
+    // Intentem agafar el nom real (Nom + Cognom) guardat al telèfon
+    val realName = sessionManager.fetchUserRealName()
+    val displayGreeting = if (!realName.isNullOrBlank()) {
+        realName // Si tenim nom real, l'usem (Ex: "Joan Petit")
+    } else {
+        userName ?: "Usuari" // Si no, usem el nick (Ex: "admin")
+    }
+
+    // Obtenim dades de permís per al filtre
     val userRole = sessionManager.fetchUserRole() ?: ""
     val assignedPlants = sessionManager.fetchAssignedPlants()
 
-    // El LaunchedEffect s'executa automàticament en obrir la pantalla
+    // --- 3. CÀRREGA DE DADES DES DE L'API ---
     LaunchedEffect(Unit) {
         val token = sessionManager.fetchAuthToken()
         if (token != null) {
@@ -46,12 +60,11 @@ fun DashboardScreen(
                 if (response.isSuccessful) {
                     val totesLesPlantes = response.body() ?: emptyList()
 
-                    // --- EL FILTRE INTEL·LIGENT ---
+                    // FILTRE SEGUR:
+                    // 1. Només plantes actives al sistema.
+                    // 2. Si ets ADMIN veus tot l'actiu. Si no, només les teves assignades.
                     plantes = totesLesPlantes.filter { planta ->
-                        // 1. La planta ha d'estar activa al sistema (Gestió de Plantes)
                         val isActiva = planta.activa
-
-                        // 2. Ha de ser ADMIN, o bé, tenir l'ID de la planta a la seva llista
                         val isAssignada = userRole.equals("ADMIN", ignoreCase = true) ||
                                 assignedPlants.contains(planta.id_planta)
 
@@ -66,33 +79,33 @@ fun DashboardScreen(
         }
     }
 
-    // FEM SERVIR LA PLANTILLA MESTRE
-    // Aprofitem que NoelScreen pot crear la TopBar passant-li un "title"
-    // --- PLANTILLA NOEL AMB MENÚ ACTIVAT ---
+    // --- 4. INTERFÀCIE VISUAL (Basada en NoelScreen) ---
     NoelScreen(
         paddingValues = paddingValues,
         title = "NOEL ENERGY",
-        hasMenu = true, // Això fa aparèixer l'hamburguesa i activa el lateral
-        // --- 2. NOU: LI PASSEM LES ORDRES A LA PLANTILLA PERQUÈ SÀPIGA QUÈ FER ---
+        hasMenu = true, // Activem el calaix lateral (Drawer)
         onNavigateToGestioPlantes = onNavigateToGestioPlantes,
         onNavigateToGestioUsuaris = onNavigateToGestioUsuaris,
-        verticalArrangement = Arrangement.Top // Al Dashboard volem que tot vagi cap a dalt
+        verticalArrangement = Arrangement.Top
     ) {
-        // Salutació alineada a l'esquerra
+        // SALUTACIÓ: Ara més personal amb el nom real de l'empleat
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
             Text(
-                text = "Hola, $userName",
-                style = MaterialTheme.typography.titleLarge
+                text = "Hola, $displayGreeting",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
             )
         }
 
+        // GESTIÓ D'ESTATS DE VISTA
         if (isLoading) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            // Roda de càrrega mentre esperem l'API
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else if (plantes.isEmpty()) {
-            // Missatge si l'usuari no té cap planta assignada o totes estan apagades
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            // Cas en que l'usuari no tingui cap permís o no hi hagi res actiu
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "No tens cap planta activa assignada.",
                     style = MaterialTheme.typography.bodyLarge,
@@ -100,7 +113,7 @@ fun DashboardScreen(
                 )
             }
         } else {
-            // LazyColumn és com el RecyclerView d'Android, ideal per llistes llargues
+            // LLISTAT DE PLANTES (LazyColumn per eficiència de memòria)
             LazyColumn(
                 modifier = Modifier.weight(1f).fillMaxWidth()
             ) {
@@ -110,16 +123,29 @@ fun DashboardScreen(
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
                             .clickable { onPlantaClick(planta.id_planta, planta.nom_planta) },
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = planta.nom_planta, modifier = Modifier.weight(1f))
-                            // Indicador de si la planta està activa
-                            Badge(containerColor = if (planta.activa) Color.Green else Color.Gray) {
-                                Text(text = if (planta.activa) "ON" else "OFF")
+                            // Nom de la planta a l'esquerra
+                            Text(
+                                text = planta.nom_planta,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+
+                            // Indicador visual ON/OFF
+                            Badge(
+                                containerColor = if (planta.activa) Color(0xFF4CAF50) else Color.Gray
+                            ) {
+                                Text(
+                                    text = if (planta.activa) "ON" else "OFF",
+                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                    color = Color.White
+                                )
                             }
                         }
                     }
@@ -129,11 +155,11 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botó per tancar sessió (Ara utilitzem la plantilla i el fem vermell)
+        // BOTÓ DE SORTIDA SEGURA
         NoelButton(
             text = "Tancar Sessió",
             onClick = { onLogout() },
-            containerColor = MaterialTheme.colorScheme.error // El fem vermell
+            containerColor = MaterialTheme.colorScheme.error // Vermell per indicar acció destructiva/sortida
         )
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -42,40 +42,28 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     paddingValues: PaddingValues,
-    onLoginSuccess: (Boolean) -> Unit,
-    // COMENTAT: Callback per navegar a la pantalla de recuperació
-    // onForgotPasswordClick: () -> Unit // NOU: Callback per navegar a la pantalla de recuperació
+    onLoginSuccess: (Boolean) -> Unit
 ) {
-    val context = LocalContext.current // Necessari per mostrar missatges tipus "Toast"
-    val scope = rememberCoroutineScope() // Crea l'espai per executar corutines
-
-    // --- MILLORA DEL TECLAT: Creem el FocusRequester per saltar d'un camp a l'altre ---
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val passwordFocusRequester = remember { FocusRequester() }
 
-    // Variables per guardar el que l'usuari escriu
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
-    // Estats per a la gestió de la resposta
     var estatCarregant by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // Variable per mostrar la contrasenya si l'usuari vol
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // FEM SERVIR LA PLANTILLA MESTRE (Ja ens dona marges i centrat)
     NoelScreen(paddingValues = paddingValues) {
-
-        // --- TECLAT QUAN OBRI QUE DESPLACI ELS CAMPS CAP A MUNT ---
-        // Emboliquem el contingut en una COlumn amb Scroll i imePadding
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // Permet fer scroll si el teclat tapa
-                .imePadding(), // Empeny el contingut cap amunt segons la mida del teclat
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // --- 1. CAPÇALERA LOGOTIP ---
             Text(
                 text = "NOEL",
                 style = MaterialTheme.typography.displayMedium,
@@ -89,54 +77,45 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // -- 2. CAMP D'USUARI (Utilitzem la plantilla) ---
+            // --- 2. CAMP D'USUARI ---
             NoelTextField(
                 value = username,
                 onValueChange = { username = it },
                 label = "Usuari",
-                enabled = !estatCarregant, // Desactivat mentre està carregant
-                // MILLORA TECLAT: Posem acció de "Next"
+                enabled = !estatCarregant,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
-                    onNext = { passwordFocusRequester.requestFocus() } // Salta al password
+                    onNext = { passwordFocusRequester.requestFocus() }
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- 3. CAMP DE CONTRASENYA AMB ULL (Utilitzem la plantilla) ---
+            // --- 3. CAMP DE CONTRASENYA ---
             NoelTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = "Contrasenya",
                 modifier = Modifier.focusRequester(passwordFocusRequester),
-                enabled = !estatCarregant, // Desactivat mentre està carregant
-                // Lògica per mostrar/amagar contrasenya
+                enabled = !estatCarregant,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                // MILLORA TECLAT: Posem acció de "Done" (fet)
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 trailingIcon = {
-                    // Triem la icona segons l'estat de passwordVisible
                     val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Mostrar contrasenya")
+                        Icon(imageVector = image, contentDescription = null)
                     }
                 }
             )
 
-            // Si hi ha un error, el mostrem en vermell
             errorMessage?.let {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- 4. BOTÓ D'ENTRAR (Plantilla NoelButton) ---
+            // --- 4. BOTÓ D'ENTRAR AMB LÒGICA DE SESSIÓ ACTUALITZADA ---
             NoelButton(
                 text = "Iniciar Sessió",
                 isLoading = estatCarregant,
@@ -154,16 +133,21 @@ fun LoginScreen(
                                     val sessionManager = com.noel.energyapp.util.SessionManager(context)
 
                                     loginResponse?.let { res ->
+                                        // --- FIX AQUÍ: Passem els 7 arguments que demana el nou SessionManager ---
                                         sessionManager.saveUserData(
                                             userId = res.id,
-                                            token = res.token,
-                                            name = res.nom,
+                                            token = res.token ?: "",
+                                            name = res.nomUsuari,           // El Nick (nom de login)
+                                            realName = "${res.nom} ${res.cognom}", // El Nom Real combinat
                                             role = res.rol,
                                             assignedPlants = res.idsPlantes.joinToString(","),
                                             mustChangePassword = res.canviPasswordObligatori
                                         )
 
-                                        Toast.makeText(context, "Benvingut ${res.nom}", Toast.LENGTH_SHORT).show()
+                                        // Salutació humanitzada al Toast
+                                        val nomA_Saludar = if (res.nom.isNotBlank()) res.nom else res.nomUsuari
+                                        Toast.makeText(context, "Benvingut, $nomA_Saludar", Toast.LENGTH_SHORT).show()
+
                                         onLoginSuccess(res.canviPasswordObligatori)
                                     }
                                 } else {
@@ -179,23 +163,5 @@ fun LoginScreen(
                 }
             )
         }
-
-        // Un petit espai al final perquè si fem scroll pugi amb aire a sota
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- 1. LOGOTIP O TÍTOL DESTACAT ---
-        // Aquí podríem carregar una Image(painterResource(R.drawable.logo_noel)...)
-
-
-        // --- 5. BOTÓ RECUPERAR CONTRASENYA ---
-//        TextButton(
-//            onClick = { onForgotPasswordClick() }, // Crida la navegació a ForgotPasswordScreen
-//            modifier = Modifier.padding(top = 8.dp)
-//        ) {
-//            Text(
-//                text = "He oblidat la meva contrasenya",
-//                color = MaterialTheme.colorScheme.secondary
-//            )
-//        }
     }
 }

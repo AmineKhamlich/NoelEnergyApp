@@ -17,6 +17,7 @@ fun NoelTextField(
     label: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isError: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -28,6 +29,7 @@ fun NoelTextField(
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(), // Estàndard: Ocupar tota l'amplada permesa
         enabled = enabled,
+        isError = isError,
         singleLine = true, // Estàndard: Sense salts de línia
         shape = MaterialTheme.shapes.medium, // Estàndard: Cantons arrodonits
         visualTransformation = visualTransformation,

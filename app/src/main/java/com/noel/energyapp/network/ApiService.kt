@@ -4,7 +4,6 @@ import com.noel.energyapp.data.ChangePasswordRequest
 import com.noel.energyapp.data.CrearUsuariDto
 import com.noel.energyapp.data.GenericResponse
 import com.noel.energyapp.data.LoginRequest
-import com.noel.energyapp.data.LoginResponse
 import com.noel.energyapp.data.PlantaDto
 import com.noel.energyapp.data.UpdatePlantesActivesDto
 import com.noel.energyapp.data.UpdateUsuariDto
@@ -21,7 +20,7 @@ interface ApiService {
     // L'URL final serà: http://172.20.1.46/api/AppUsuari/login
     @POST("Usuari/login")
     // Es fa suspend perque no volem que el mòbil es quedi congelat esperant
-    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): Response<UsuariResumDto>
 
     // Utilitzem @Header("Authorization") per enviar el Token: "Bearer <token>"
     @GET("Planta")
