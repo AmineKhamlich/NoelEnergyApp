@@ -1,12 +1,19 @@
 package com.noel.energyapp.ui.login
 
 import android.widget.Toast
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -14,8 +21,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -30,6 +37,7 @@ import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
 import com.noel.energyapp.ui.components.NoelTextField
 import kotlinx.coroutines.launch
+
 
 @Composable
 fun LoginScreen(
@@ -58,110 +66,126 @@ fun LoginScreen(
     // FEM SERVIR LA PLANTILLA MESTRE (Ja ens dona marges i centrat)
     NoelScreen(paddingValues = paddingValues) {
 
-        // --- 1. LOGOTIP O TÍTOL DESTACAT ---
-        // Aquí podríem carregar una Image(painterResource(R.drawable.logo_noel)...)
-        Text(
-            text = "NOEL",
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = "ENERGY MANAGEMENT",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // -- 2. CAMP D'USUARI (Utilitzem la plantilla) ---
-        NoelTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = "Usuari",
-            enabled = !estatCarregant, // Desactivat mentre està carregant
-            // MILLORA TECLAT: Posem acció de "Next"
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(
-                onNext = { passwordFocusRequester.requestFocus() } // Salta al password
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- 3. CAMP DE CONTRASENYA AMB ULL (Utilitzem la plantilla) ---
-        NoelTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = "Contrasenya",
-            modifier = Modifier.focusRequester(passwordFocusRequester),
-            enabled = !estatCarregant, // Desactivat mentre està carregant
-            // Lògica per mostrar/amagar contrasenya
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            // MILLORA TECLAT: Posem acció de "Done" (fet)
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            trailingIcon = {
-                // Triem la icona segons l'estat de passwordVisible
-                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, contentDescription = "Mostrar contrasenya")
-                }
-            }
-        )
-
-        // Si hi ha un error, el mostrem en vermell
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(8.dp))
+        // --- TECLAT QUAN OBRI QUE DESPLACI ELS CAMPS CAP A MUNT ---
+        // Emboliquem el contingut en una COlumn amb Scroll i imePadding
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()) // Permet fer scroll si el teclat tapa
+                .imePadding(), // Empeny el contingut cap amunt segons la mida del teclat
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                text = "NOEL",
+                style = MaterialTheme.typography.displayMedium,
+                color = MaterialTheme.colorScheme.primary
             )
-        }
+            Text(
+                text = "ENERGY MANAGEMENT",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.secondary
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-        // --- 4. BOTÓ D'ENTRAR (Plantilla NoelButton) ---
-        NoelButton(
-            text = "Iniciar Sessió",
-            isLoading = estatCarregant,
-            onClick = {
-                if (username.isBlank() || password.isBlank()) {
-                    errorMessage = "Si us plau, omple tots els camps"
-                } else {
-                    scope.launch {
-                        estatCarregant = true
-                        errorMessage = null
-                        try {
-                            val response = RetrofitClient.instance.login(LoginRequest(username, password))
-                            if (response.isSuccessful) {
-                                val loginResponse = response.body()
-                                val sessionManager = com.noel.energyapp.util.SessionManager(context)
+            // -- 2. CAMP D'USUARI (Utilitzem la plantilla) ---
+            NoelTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = "Usuari",
+                enabled = !estatCarregant, // Desactivat mentre està carregant
+                // MILLORA TECLAT: Posem acció de "Next"
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { passwordFocusRequester.requestFocus() } // Salta al password
+                )
+            )
 
-                                loginResponse?.let { res ->
-                                    sessionManager.saveUserData(
-                                        userId = res.id,
-                                        token = res.token,
-                                        name = res.nom,
-                                        role = res.rol,
-                                        assignedPlants = res.idsPlantes.joinToString(","),
-                                        mustChangePassword = res.canviPasswordObligatori
-                                    )
+            Spacer(modifier = Modifier.height(16.dp))
 
-                                    Toast.makeText(context, "Benvingut ${res.nom}", Toast.LENGTH_SHORT).show()
-                                    onLoginSuccess(res.canviPasswordObligatori)
+            // --- 3. CAMP DE CONTRASENYA AMB ULL (Utilitzem la plantilla) ---
+            NoelTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Contrasenya",
+                modifier = Modifier.focusRequester(passwordFocusRequester),
+                enabled = !estatCarregant, // Desactivat mentre està carregant
+                // Lògica per mostrar/amagar contrasenya
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                // MILLORA TECLAT: Posem acció de "Done" (fet)
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                trailingIcon = {
+                    // Triem la icona segons l'estat de passwordVisible
+                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = "Mostrar contrasenya")
+                    }
+                }
+            )
+
+            // Si hi ha un error, el mostrem en vermell
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // --- 4. BOTÓ D'ENTRAR (Plantilla NoelButton) ---
+            NoelButton(
+                text = "Iniciar Sessió",
+                isLoading = estatCarregant,
+                onClick = {
+                    if (username.isBlank() || password.isBlank()) {
+                        errorMessage = "Si us plau, omple tots els camps"
+                    } else {
+                        scope.launch {
+                            estatCarregant = true
+                            errorMessage = null
+                            try {
+                                val response = RetrofitClient.instance.login(LoginRequest(username, password))
+                                if (response.isSuccessful) {
+                                    val loginResponse = response.body()
+                                    val sessionManager = com.noel.energyapp.util.SessionManager(context)
+
+                                    loginResponse?.let { res ->
+                                        sessionManager.saveUserData(
+                                            userId = res.id,
+                                            token = res.token,
+                                            name = res.nom,
+                                            role = res.rol,
+                                            assignedPlants = res.idsPlantes.joinToString(","),
+                                            mustChangePassword = res.canviPasswordObligatori
+                                        )
+
+                                        Toast.makeText(context, "Benvingut ${res.nom}", Toast.LENGTH_SHORT).show()
+                                        onLoginSuccess(res.canviPasswordObligatori)
+                                    }
+                                } else {
+                                    errorMessage = "Usuari o contrasenya incorrectes"
                                 }
-                            } else {
-                                errorMessage = "Usuari o contrasenya incorrectes"
+                            } catch (e: Exception) {
+                                errorMessage = "Error de connexió al servidor"
+                            } finally {
+                                estatCarregant = false
                             }
-                        } catch (e: Exception) {
-                            errorMessage = "Error de connexió al servidor"
-                        } finally {
-                            estatCarregant = false
                         }
                     }
                 }
-            }
-        )
+            )
+        }
+
+        // Un petit espai al final perquè si fem scroll pugi amb aire a sota
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- 1. LOGOTIP O TÍTOL DESTACAT ---
+        // Aquí podríem carregar una Image(painterResource(R.drawable.logo_noel)...)
+
 
         // --- 5. BOTÓ RECUPERAR CONTRASENYA ---
 //        TextButton(

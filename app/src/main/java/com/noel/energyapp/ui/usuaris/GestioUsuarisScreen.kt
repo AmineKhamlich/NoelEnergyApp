@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LockReset
@@ -12,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -253,11 +256,17 @@ fun GestioUsuarisScreen(
         var nouCognom by remember { mutableStateOf("") }
         var nouRol by remember { mutableStateOf("SUPERVISOR") }
 
+        // Creem els enllaços per saltar d'un camp a l'altre
+        val nomFocusRequester = remember { FocusRequester() }
+        val cognomFocusRequester = remember { FocusRequester() }
+
         AlertDialog(
             onDismissRequest = { showCreateUserDialog = false },
             title = { Text("Crear Nou Usuari") },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
                     Text("La contrasenya s'establirà a '123456' automàticament.", style = MaterialTheme.typography.labelSmall, color = Color.Gray, modifier = Modifier.padding(bottom = 8.dp))
 
                     OutlinedTextField(

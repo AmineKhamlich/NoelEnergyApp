@@ -2,7 +2,9 @@ package com.noel.energyapp.ui.login
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +35,11 @@ fun ChangePasswordScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
+    // Estats per controlar els "ullets" de cada camp independentment
+    var oldPasswordVisible by remember { mutableStateOf(false) }
+    var newPasswordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -43,104 +50,124 @@ fun ChangePasswordScreen(
         hasMenu = false,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Per motius de seguretat, has d'establir una nova contrasenya abans d'accedir a l'aplicació.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
+        // Emboliquem el contingut per gestionar el teclat i l'scroll
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding(), // Empeny la pantalla cap amunt quan surt el teclat
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
 
-        NoelTextField(
-            value = oldPassword,
-            onValueChange = { oldPassword = it },
-            label = "Contrasenya Actual",
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-        )
+            Text(
+                text = "Per motius de seguretat, has d'establir una nova contrasenya abans d'accedir a l'aplicació.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            NoelTextField(
+                value = oldPassword,
+                onValueChange = { oldPassword = it },
+                label = "Contrasenya Actual",
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
 
-        NoelTextField(
-            value = newPassword,
-            onValueChange = { newPassword = it },
-            label = "Nova Contrasenya (Mínim 6 caràcters)",
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-        )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+            NoelTextField(
+                value = newPassword,
+                onValueChange = { newPassword = it },
+                label = "Nova Contrasenya (Mínim 6 caràcters)",
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
 
-        NoelTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = "Repeteix la Nova Contrasenya",
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
-        )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
+            NoelTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = "Repeteix la Nova Contrasenya",
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
-        NoelButton(
-            text = "Guardar i Continuar",
-            isLoading = isLoading,
-            onClick = {
-                // VALIDACIONS (Les mateixes que tenim al C#)
-                if (oldPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank()) {
-                    errorMessage = "Tots els camps són obligatoris."
-                    return@NoelButton
-                }
-                if (newPassword.length < 6) {
-                    errorMessage = "La nova contrasenya ha de tenir mínim 6 caràcters."
-                    return@NoelButton
-                }
-                if (newPassword == "123456") {
-                    errorMessage = "No pots utilitzar la contrasenya per defecte."
-                    return@NoelButton
-                }
-                if (newPassword != confirmPassword) {
-                    errorMessage = "Les noves contrasenyes no coincideixen."
-                    return@NoelButton
-                }
+            Spacer(modifier = Modifier.height(32.dp))
 
-                // CRIDA A L'API
-                scope.launch {
-                    isLoading = true
-                    errorMessage = null
-                    try {
-                        val token = sessionManager.fetchAuthToken() ?: ""
-                        val userId = sessionManager.fetchUserId()
-                        val request = ChangePasswordRequest(userId, oldPassword, newPassword)
+            NoelButton(
+                text = "Guardar i Continuar",
+                isLoading = isLoading,
+                onClick = {
+                    // VALIDACIONS (Les mateixes que tenim al C#)
+                    if (oldPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank()) {
+                        errorMessage = "Tots els camps són obligatoris."
+                        return@NoelButton
+                    }
+                    if (newPassword.length < 6) {
+                        errorMessage = "La nova contrasenya ha de tenir mínim 6 caràcters."
+                        return@NoelButton
+                    }
+                    if (newPassword == "123456") {
+                        errorMessage = "No pots utilitzar la contrasenya per defecte."
+                        return@NoelButton
+                    }
+                    if (newPassword != confirmPassword) {
+                        errorMessage = "Les noves contrasenyes no coincideixen."
+                        return@NoelButton
+                    }
 
-                        val response = RetrofitClient.instance.changePassword("Bearer $token", request)
+                    // CRIDA A L'API
+                    scope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        try {
+                            val token = sessionManager.fetchAuthToken() ?: ""
+                            val userId = sessionManager.fetchUserId()
+                            val request = ChangePasswordRequest(userId, oldPassword, newPassword)
 
-                        if (response.isSuccessful) {
-                            Toast.makeText(context, "Contrasenya actualitzada!", Toast.LENGTH_SHORT).show()
-                            // Alliberem a l'usuari de l'obligació de canviar la contrasenya
-                            sessionManager.clearMustChangePasswordFlag()
-                            onPasswordChangedSuccessfully() // Naveguem al Dashboard
-                        } else {
-                            errorMessage = "Error: Comprova que la contrasenya actual sigui correcta."
+                            val response =
+                                RetrofitClient.instance.changePassword("Bearer $token", request)
+
+                            if (response.isSuccessful) {
+                                Toast.makeText(
+                                    context,
+                                    "Contrasenya actualitzada!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                // Alliberem a l'usuari de l'obligació de canviar la contrasenya
+                                sessionManager.clearMustChangePasswordFlag()
+                                onPasswordChangedSuccessfully() // Naveguem al Dashboard
+                            } else {
+                                errorMessage =
+                                    "Error: Comprova que la contrasenya actual sigui correcta."
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Error de connexió al servidor."
+                        } finally {
+                            isLoading = false
                         }
-                    } catch (e: Exception) {
-                        errorMessage = "Error de connexió al servidor."
-                    } finally {
-                        isLoading = false
                     }
                 }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(onClick = onLogoutClick) {
+                Text("Cancel·lar i Tancar Sessió", color = MaterialTheme.colorScheme.error)
             }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(onClick = onLogoutClick) {
-            Text("Cancel·lar i Tancar Sessió", color = MaterialTheme.colorScheme.error)
         }
     }
 }
