@@ -1,15 +1,20 @@
 package com.noel.energyapp.network
 
 import com.noel.energyapp.data.ChangePasswordRequest
+import com.noel.energyapp.data.CrearUsuariDto
 import com.noel.energyapp.data.GenericResponse
 import com.noel.energyapp.data.LoginRequest
 import com.noel.energyapp.data.LoginResponse
 import com.noel.energyapp.data.PlantaDto
+import com.noel.energyapp.data.UpdatePlantesActivesDto
+import com.noel.energyapp.data.UpdateUsuariDto
+import com.noel.energyapp.data.UsuariResumDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 
 interface ApiService {
     // Fem un POST perquè enviem dades sensibles (usuari/pass) al cos de la petició.
@@ -32,4 +37,33 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: ChangePasswordRequest
     ): Response<GenericResponse>
+
+    // Per actualitzar massivament les plantes per l'Admin
+    @PUT("Planta/estat")
+    suspend fun updateEstatMassiu(
+        @Header("Authorization") token: String,
+        @Body request: UpdatePlantesActivesDto
+    ): Response<GenericResponse>
+
+    // --- GESTIÓ D'USUARIS (ADMIN) ---
+
+    // 1. Obtenir tota la llista d'usuaris
+    @GET("Usuari")
+    suspend fun getUsuaris(@Header("Authorization") token: String): Response<List<UsuariResumDto>>
+
+    // 2. Crear un usuari nou
+    @POST("Usuari/crear")
+    suspend fun crearUsuari(
+        @Header("Authorization") token: String,
+        @Body request: CrearUsuariDto
+    ): Response<GenericResponse>
+
+    // 3. Actualitzar rol, estat o plantes d'un usuari
+    @PUT("Usuari/actualitzar")
+    suspend fun actualitzarUsuari(
+        @Header("Authorization") token: String,
+        @Body request: UpdateUsuariDto
+    ): Response<GenericResponse>
+
+
 }

@@ -6,3 +6,8 @@ data class PlantaDto(
     val nom_planta: String,
     val activa: Boolean
 )
+
+// Aquest DTO coincideix amb el UpdatePlantesActivesDto del C#
+data class UpdatePlantesActivesDto(
+    val idsPlantesActives: List<Int>
+)
