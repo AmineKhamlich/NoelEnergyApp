@@ -27,7 +27,8 @@ fun PlantaDetailScreen(
     plantaId: Int,
     plantaNom: String,
     onBackClick: () -> Unit,
-    onNavigateToAlarmesActives: () -> Unit
+    onNavigateToAlarmesActives: () -> Unit,
+    onNavigateToAlarmesHistoric: () -> Unit
 ) {
     // --- FEM SERVIR LA PLANTILLA MESTRE NOELSCREEN ---
     // Li passem el nom de la planta al title, i activem la fletxa i el menú
@@ -67,7 +68,7 @@ fun PlantaDetailScreen(
         DetailCard(
             text = "HISTÒRIC ALARMES",
             containerColor = MaterialTheme.colorScheme.secondary, // Un color diferent per diferenciar
-            onClick = { /* Navegar a històric */ }
+            onClick = { onNavigateToAlarmesHistoric() }
         )
     }
 }

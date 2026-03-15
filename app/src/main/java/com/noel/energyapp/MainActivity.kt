@@ -23,6 +23,8 @@ import com.noel.energyapp.ui.theme.NoelEnergyAppTheme
 import com.noel.energyapp.util.SessionManager
 import com.noel.energyapp.ui.planta.GestioPlantesScreen
 import com.noel.energyapp.ui.usuaris.GestioUsuarisScreen
+import com.noel.energyapp.ui.alarmes.AlarmesHistoricScreen
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -142,9 +144,8 @@ class MainActivity : ComponentActivity() {
                                 plantaId = plantaId,
                                 plantaNom = plantaNom,
                                 onBackClick = { navController.popBackStack() },
-                                onNavigateToAlarmesActives = {
-                                    navController.navigate(Screen.AlarmesActives.route)
-                                }
+                                onNavigateToAlarmesActives = { navController.navigate(Screen.AlarmesActives.route) },
+                                onNavigateToAlarmesHistoric = { navController.navigate(Screen.AlarmesHistoric.route) }
                             )
                         }
 
@@ -204,13 +205,34 @@ class MainActivity : ComponentActivity() {
                                 paddingValues = padding,
                                 onBackClick = { navController.popBackStack() },
                                 onNavigateToTancarAlarma = { idIncidencia ->
-                                    // De moment posem un Toast, el pròxim pas serà fer el formulari per tancar-la!
-                                    android.widget.Toast.makeText(
-                                        this@MainActivity,
-                                        "Tancar incidència ID: $idIncidencia",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
+                                    navController.navigate(Screen.TancarIncidencia.createRoute(idIncidencia))
                                 }
+                            )
+                        }
+
+                        // --- RUTA 9: TANCAR INCIDÈNCIA ---
+                        composable(
+                            route = Screen.TancarIncidencia.route,
+                            arguments = listOf(androidx.navigation.navArgument("incidenciaId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val id = backStackEntry.arguments?.getInt("incidenciaId") ?: 0
+
+                            com.noel.energyapp.ui.alarmes.TancarIncidenciaScreen(
+                                paddingValues = padding,
+                                incidenciaId = id,
+                                onBackClick = { navController.popBackStack() },
+                                onSuccess = {
+                                    // Si va bé, tirem enrere cap a la llista d'alarmes per veure com ha desaparegut
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        // --- RUTA 10: HISTÒRIC D'ALARMES ---
+                        composable(Screen.AlarmesHistoric.route) {
+                            AlarmesHistoricScreen(
+                                paddingValues = padding,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                     }

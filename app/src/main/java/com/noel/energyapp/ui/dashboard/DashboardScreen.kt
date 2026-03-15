@@ -60,13 +60,12 @@ fun DashboardScreen(
                 if (response.isSuccessful) {
                     val totesLesPlantes = response.body() ?: emptyList()
 
-                    // FILTRE SEGUR:
-                    // 1. Només plantes actives al sistema.
-                    // 2. Si ets ADMIN veus tot l'actiu. Si no, només les teves assignades.
+                    // FILTRE SEGUR REVISAT:
+                    // 1. La planta ha d'estar activa al sistema.
+                    // 2. L'usuari TÉ L'OBLIGACIÓ de tenir-la assignada (sigui Admin o Tècnic).
                     plantes = totesLesPlantes.filter { planta ->
                         val isActiva = planta.activa
-                        val isAssignada = userRole.equals("ADMIN", ignoreCase = true) ||
-                                assignedPlants.contains(planta.id_planta)
+                        val isAssignada = assignedPlants.contains(planta.id_planta)
 
                         isActiva && isAssignada
                     }

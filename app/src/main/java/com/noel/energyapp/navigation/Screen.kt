@@ -21,6 +21,17 @@ sealed class Screen(val route: String) {
     // Rutes per a la gestio d'alarmes
     object AlarmesActives : Screen("alarmes_actives")
 
+    // Ruta per a tancar incidencia
+    object TancarIncidencia : Screen("tancar_incidencia/{incidenciaId}") {
+        // Aquesta funció ens ajuda a crear la URL: "tancar_incidencia/45"
+        fun createRoute(id: Int) = "tancar_incidencia/$id"
+    }
+
     // Ruta per el canvi de contrasenya obligatori
     object ChangePassword : Screen("change_password")
-    }
+
+    // Ruta per a l'historial d'alarmes
+    object AlarmesHistoric : Screen("alarmes_historic")
+}
+
+

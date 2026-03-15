@@ -17,6 +17,7 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 
+
 interface ApiService {
     // Fem un POST perquè enviem dades sensibles (usuari/pass) al cos de la petició.
     // L'URL final serà: http://172.20.1.46/api/AppUsuari/login
@@ -82,5 +83,5 @@ interface ApiService {
     suspend fun tancarIncidencia(
         @Header("Authorization") token: String,
         @Body request: TancarIncidenciaDto
-    ): Response<Unit>
+    ): Response<GenericResponse>
 }

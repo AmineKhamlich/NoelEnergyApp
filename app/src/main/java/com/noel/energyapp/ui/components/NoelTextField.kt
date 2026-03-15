@@ -21,7 +21,11 @@ fun NoelTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    // NOVES UNITATS: Per defecte serà d'una línia com fins ara
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE
 ) {
     OutlinedTextField(
         value = value,
@@ -30,7 +34,9 @@ fun NoelTextField(
         modifier = modifier.fillMaxWidth(), // Estàndard: Ocupar tota l'amplada permesa
         enabled = enabled,
         isError = isError,
-        singleLine = true, // Estàndard: Sense salts de línia
+        singleLine = singleLine, // Estàndard: Sense salts de línia
+        minLines = minLines,
+        maxLines = maxLines,
         shape = MaterialTheme.shapes.medium, // Estàndard: Cantons arrodonits
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,

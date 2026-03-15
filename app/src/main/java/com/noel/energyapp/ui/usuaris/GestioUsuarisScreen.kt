@@ -491,10 +491,22 @@ fun GestioUsuarisScreen(
     // DIÀLEG: ASSIGNACIÓ DE PLANTES (Accés granular)
     if (usuariSeleccionat_per_plantes != null) {
         val user = usuariSeleccionat_per_plantes!!
-        var plantesSeleccionades by remember {
-            mutableStateOf(
-                user.idsPlantes?.toSet() ?: emptySet()
-            )
+
+        var plantesSeleccionades by remember(user.id) {
+            // 1. Agafem el text que envia el C# (Ex: "Noel-1, Noel-7")
+            val textAssignades = user.plantesAssignadesText ?: ""
+
+            // 2. Separem els noms per comes i traiem els espais en blanc dels costats
+            val nomsAssignats = textAssignades.split(",").map { it.trim() }
+
+            // 3. Busquem a la nostra llista de plantes quins IDs corresponen a aquests noms!
+            val idsCalculats = plantes
+                .filter { nomsAssignats.contains(it.nom_planta) }
+                .map { it.id_planta }
+                .toSet()
+
+            // Carreguem els IDs directament als Ticks!
+            mutableStateOf(idsCalculats)
         }
 
         AlertDialog(
@@ -503,7 +515,7 @@ fun GestioUsuarisScreen(
             text = {
                 Column {
                     Text(
-                        "Selecciona a quines plantes pot accedir ${user.nomUsuari}:",
+                        "Selecciona a quines plantes pot accedir @${user.nomUsuari}:",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -518,7 +530,8 @@ fun GestioUsuarisScreen(
                                 checked = plantesSeleccionades.contains(planta.id_planta),
                                 onCheckedChange = { isChecked ->
                                     plantesSeleccionades =
-                                        if (isChecked) plantesSeleccionades + planta.id_planta else plantesSeleccionades - planta.id_planta
+                                        if (isChecked) plantesSeleccionades + planta.id_planta
+                                        else plantesSeleccionades - planta.id_planta
                                 }
                             )
                             Text(text = planta.nom_planta)
@@ -547,9 +560,7 @@ fun GestioUsuarisScreen(
             },
             dismissButton = {
                 TextButton(onClick = { usuariSeleccionat_per_plantes = null }) {
-                    Text(
-                        "Cancel·lar"
-                    )
+                    Text("Cancel·lar")
                 }
             }
         )
