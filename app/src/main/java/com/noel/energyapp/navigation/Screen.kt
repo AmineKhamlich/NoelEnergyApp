@@ -18,6 +18,9 @@ sealed class Screen(val route: String) {
     object GestioPlantes : Screen("gestio_plantes")
     object GestioUsuaris : Screen("gestio_usuaris")
 
+    // Rutes per a la gestio d'alarmes
+    object AlarmesActives : Screen("alarmes_actives")
+
     // Ruta per el canvi de contrasenya obligatori
     object ChangePassword : Screen("change_password")
     }

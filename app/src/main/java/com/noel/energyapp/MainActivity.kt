@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument // NOU IMPORT (Per fer el codi més net)
 import com.noel.energyapp.navigation.Screen
+import com.noel.energyapp.ui.alarmes.AlarmesActivesScreen
 import com.noel.energyapp.ui.dashboard.DashboardScreen
 import com.noel.energyapp.ui.login.ForgotPasswordScreen
 import com.noel.energyapp.ui.login.LoginScreen
@@ -120,6 +121,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+
                         // --- RUTA 4: DETALL DE LA PLANTA ---
                         composable(
                             route = Screen.PlantaDetail.route, // Ruta: "planta_detail/{plantaId}/{plantaNom}"
@@ -131,16 +133,17 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             // Extraiem els valors exactes de la URL de navegació de manera segura
                             val plantaId = backStackEntry.arguments?.getInt("plantaId") ?: 0
-                            val plantaNom = backStackEntry.arguments?.getString("plantaNom") ?: "Planta"
+                            val plantaNom =
+                                backStackEntry.arguments?.getString("plantaNom") ?: "Planta"
 
                             // Cridem la nostra funció de Compose passant-li les dades
                             PlantaDetailScreen(
                                 paddingValues = padding,
                                 plantaId = plantaId,
                                 plantaNom = plantaNom,
-                                onBackClick = {
-                                    // Tornem enrere al Dashboard utilitzant la fletxa de la TopBar
-                                    navController.popBackStack()
+                                onBackClick = { navController.popBackStack() },
+                                onNavigateToAlarmesActives = {
+                                    navController.navigate(Screen.AlarmesActives.route)
                                 }
                             )
                         }
@@ -153,7 +156,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToGestioPlantes = { /* Ja som aquí, no fem res */ },
                                 onNavigateToGestioUsuaris = {
                                     navController.navigate(Screen.GestioUsuaris.route) {
-                                        popUpTo (Screen.Dashboard.route)
+                                        popUpTo(Screen.Dashboard.route)
                                     }
                                 }
                             )
@@ -187,8 +190,26 @@ class MainActivity : ComponentActivity() {
                                     // Si es penedeix i no vol canviar la contrasenya, l'esborrem i el tirem al Login
                                     sessionManager.clearUserData()
                                     navController.navigate(Screen.Login.route) {
-                                        popUpTo(0) { inclusive = true } // popUpTo(0) buida TOT l'historial
+                                        popUpTo(0) {
+                                            inclusive = true
+                                        } // popUpTo(0) buida TOT l'historial
                                     }
+                                }
+                            )
+                        }
+
+                        // --- RUTA 8: ALARMES ACTIVES ---
+                        composable(Screen.AlarmesActives.route) {
+                            AlarmesActivesScreen(
+                                paddingValues = padding,
+                                onBackClick = { navController.popBackStack() },
+                                onNavigateToTancarAlarma = { idIncidencia ->
+                                    // De moment posem un Toast, el pròxim pas serà fer el formulari per tancar-la!
+                                    android.widget.Toast.makeText(
+                                        this@MainActivity,
+                                        "Tancar incidència ID: $idIncidencia",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             )
                         }

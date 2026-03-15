@@ -29,7 +29,21 @@ import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
 
 // Llista de rols permesos al sistema SCADA de Noel
-val rolsDisponibles = listOf("ADMIN", "SUPERVISOR", "TÈCNIC")
+// ---------------------------------------------------------
+// EINES DE TRADUCCIÓ (UI <-> Base de Dades)
+// ---------------------------------------------------------
+val rolsDisponibles = listOf("ADMIN", "SUPERVISOR", "TÈCNIC") // Llista visual amb accents
+
+// Converteix el que ve de la BD (ex: TECNIC) al que veu l'usuari (ex: TÈCNIC)
+fun rolDBToVisual(rolDB: String): String {
+    return if (rolDB.equals("TECNIC", ignoreCase = true)) "TÈCNIC" else rolDB.uppercase()
+}
+
+// Converteix el que veu l'usuari (ex: TÈCNIC) al que entén la BD (ex: TECNIC)
+fun rolVisualToDB(rolUI: String): String {
+    return if (rolUI == "TÈCNIC") "TECNIC" else rolUI
+}
+// ---------------------------------------------------------
 
 @Composable
 fun GestioUsuarisScreen(
@@ -101,7 +115,9 @@ fun GestioUsuarisScreen(
     ) {
         // --- BARRA DE RECERCA I BOTÓ D'AFEGIR ---
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
@@ -127,14 +143,23 @@ fun GestioUsuarisScreen(
 
         // --- CONTINGUT PRINCIPAL ---
         if (isLoading) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            LazyColumn(modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)) {
                 items(usuarisFiltrats) { usuari ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
                         shape = MaterialTheme.shapes.medium,
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
@@ -146,7 +171,8 @@ fun GestioUsuarisScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     // Determinem què mostrem en gran (Prioritat Nom Real)
-                                    val títolCard = if (usuari.nom.isNotBlank()) "${usuari.nom} ${usuari.cognom}" else usuari.nomUsuari
+                                    val títolCard =
+                                        if (usuari.nom.isNotBlank()) "${usuari.nom} ${usuari.cognom}" else usuari.nomUsuari
 
                                     Text(
                                         text = títolCard,
@@ -188,13 +214,28 @@ fun GestioUsuarisScreen(
                                         onCheckedChange = { isChecked ->
                                             scope.launch {
                                                 // Optimisme visual
-                                                usuaris = usuaris.map { if (it.id == usuari.id) it.copy(actiu = isChecked) else it }
+                                                usuaris = usuaris.map {
+                                                    if (it.id == usuari.id) it.copy(actiu = isChecked) else it
+                                                }
                                                 try {
-                                                    val request = UpdateUsuariDto(usuari.id, null, isChecked, null, null)
-                                                    RetrofitClient.instance.actualitzarUsuari("Bearer $token", request)
+                                                    val request = UpdateUsuariDto(
+                                                        usuari.id,
+                                                        null,
+                                                        isChecked,
+                                                        null,
+                                                        null
+                                                    )
+                                                    RetrofitClient.instance.actualitzarUsuari(
+                                                        "Bearer $token",
+                                                        request
+                                                    )
                                                 } catch (e: Exception) {
                                                     recarregarDades()
-                                                    Toast.makeText(context, "Error al servidor", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Error al servidor",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                 }
                                             }
                                         },
@@ -219,9 +260,15 @@ fun GestioUsuarisScreen(
                                 Button(
                                     onClick = { usuariSeleccionat_per_rol = usuari },
                                     modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
                                 ) {
-                                    Text(text = usuari.rol, style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        text = usuari.rol,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
                                 }
 
                                 // Botó per assignar plantes
@@ -229,12 +276,19 @@ fun GestioUsuarisScreen(
                                     onClick = { usuariSeleccionat_per_plantes = usuari },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text(text = "PLANTES", style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        text = "PLANTES",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
                                 }
 
                                 // Botó vermell per reset de contrasenya (123456)
                                 IconButton(onClick = { usuariAResetejar = usuari }) {
-                                    Icon(Icons.Default.LockReset, contentDescription = "Reset Password", tint = MaterialTheme.colorScheme.error)
+                                    Icon(
+                                        Icons.Default.LockReset,
+                                        contentDescription = "Reset Password",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
                                 }
                             }
                         }
@@ -258,9 +312,14 @@ fun GestioUsuarisScreen(
                         val usernameTarget = usuariAResetejar?.nomUsuari ?: ""
                         scope.launch {
                             try {
-                                val response = RetrofitClient.instance.resetPassword(mapOf("username" to usernameTarget))
+                                val response =
+                                    RetrofitClient.instance.resetPassword(mapOf("username" to usernameTarget))
                                 if (response.isSuccessful) {
-                                    Toast.makeText(context, "Contrasenya restablerta", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Contrasenya restablerta",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     recarregarDades()
                                 }
                             } finally {
@@ -271,11 +330,15 @@ fun GestioUsuarisScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { Text("SÍ, RESTABLIR") }
             },
-            dismissButton = { TextButton(onClick = { usuariAResetejar = null }) { Text("Cancel·lar") } }
+            dismissButton = {
+                TextButton(onClick = {
+                    usuariAResetejar = null
+                }) { Text("Cancel·lar") }
+            }
         )
     }
 
-    // DIÀLEG: CREAR NOU USUARI (Humanitzat)
+    // DIÀLEG: CREAR NOU USUARI
     if (showCreateUserDialog) {
         var nouNick by remember { mutableStateOf("") }
         var nouNomReal by remember { mutableStateOf("") }
@@ -287,20 +350,41 @@ fun GestioUsuarisScreen(
             title = { Text("Crear Nou Usuari") },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text("Configuració inicial de l'empleat:", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(
+                        "Configuració inicial de l'empleat:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    OutlinedTextField(value = nouNick, onValueChange = { nouNick = it }, label = { Text("Nom d'usuari (@nick)") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = nouNick,
+                        onValueChange = { nouNick = it },
+                        label = { Text("Nom d'usuari (@nick)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = nouNomReal, onValueChange = { nouNomReal = it }, label = { Text("Nom real") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = nouNomReal,
+                        onValueChange = { nouNomReal = it },
+                        label = { Text("Nom real") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = nouCognom, onValueChange = { nouCognom = it }, label = { Text("Cognom real") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = nouCognom,
+                        onValueChange = { nouCognom = it },
+                        label = { Text("Cognom real") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Selecciona el Rol d'accés:", style = MaterialTheme.typography.labelMedium)
                     rolsDisponibles.forEach { rolNom ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = (nouRol == rolNom), onClick = { nouRol = rolNom })
+                            RadioButton(
+                                selected = (nouRol == rolNom),
+                                onClick = { nouRol = rolNom })
                             Text(text = rolNom)
                         }
                     }
@@ -309,44 +393,81 @@ fun GestioUsuarisScreen(
             confirmButton = {
                 Button(onClick = {
                     if (nouNick.isBlank() || nouNomReal.isBlank()) {
-                        Toast.makeText(context, "Mínim Nick i Nom són obligatoris", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Mínim Nick i Nom són obligatoris",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         return@Button
                     }
                     scope.launch {
                         try {
-                            val request = CrearUsuariDto(nouNick, nouNomReal, nouCognom, nouRol, emptyList())
-                            val response = RetrofitClient.instance.crearUsuari("Bearer $token", request)
+                            val rolPerAPI = rolVisualToDB(nouRol)
+                            val request =
+                                CrearUsuariDto(nouNick, nouNomReal, nouCognom, nouRol, emptyList())
+                            val response =
+                                RetrofitClient.instance.crearUsuari("Bearer $token", request)
                             if (response.isSuccessful) {
                                 recarregarDades()
                                 showCreateUserDialog = false
                             } else {
-                                Toast.makeText(context, "Aquest nick ja existeix!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Aquest nick ja existeix!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
-                        } catch (e: Exception) { /* Error */ }
+                        } catch (e: Exception) { /* Error */
+                        }
                     }
                 }) { Text("CREAR USUARI") }
             },
-            dismissButton = { TextButton(onClick = { showCreateUserDialog = false }) { Text("Cancel·lar") } }
+            dismissButton = {
+                TextButton(onClick = {
+                    showCreateUserDialog = false
+                }) { Text("Cancel·lar") }
+            }
         )
     }
 
-    // DIÀLEG: CANVI DE ROL
+    /// DIÀLEG: CANVI DE ROL
     if (usuariSeleccionat_per_rol != null) {
+        val usuari = usuariSeleccionat_per_rol!!
+        // 1. Traduïm el rol que ve de la BD ("TECNIC") al format visual ("TÈCNIC") per poder-lo comparar
+        val rolActualVisual = rolDBToVisual(usuari.rol)
+
         AlertDialog(
             onDismissRequest = { usuariSeleccionat_per_rol = null },
             title = { Text("Canviar Rol") },
             text = {
                 Column {
                     rolsDisponibles.forEach { rolNom ->
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
                             RadioButton(
-                                selected = (usuariSeleccionat_per_rol?.rol == rolNom),
+                                // 2. Ara comparem visual amb visual (Així el botó es marcarà bé!)
+                                selected = (rolActualVisual == rolNom),
                                 onClick = {
-                                    val user = usuariSeleccionat_per_rol!!
                                     scope.launch {
                                         try {
-                                            val request = UpdateUsuariDto(user.id, nouRol = rolNom, actiu = null, canviPasswordObligatori = null, idsPlantes = null)
-                                            RetrofitClient.instance.actualitzarUsuari("Bearer $token", request)
+                                            // 3. Tornem a traduir cap a la BD abans d'enviar
+                                            val rolPerAPI = rolVisualToDB(rolNom)
+
+                                            val request = UpdateUsuariDto(
+                                                usuari.id,
+                                                nouRol = rolPerAPI,
+                                                actiu = null,
+                                                canviPasswordObligatori = null,
+                                                idsPlantes = null
+                                            )
+                                            RetrofitClient.instance.actualitzarUsuari(
+                                                "Bearer $token",
+                                                request
+                                            )
                                             recarregarDades()
                                         } finally {
                                             usuariSeleccionat_per_rol = null
@@ -359,29 +480,45 @@ fun GestioUsuarisScreen(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { usuariSeleccionat_per_rol = null }) { Text("Tancar") } }
+            confirmButton = {
+                TextButton(onClick = {
+                    usuariSeleccionat_per_rol = null
+                }) { Text("Tancar") }
+            }
         )
     }
 
     // DIÀLEG: ASSIGNACIÓ DE PLANTES (Accés granular)
     if (usuariSeleccionat_per_plantes != null) {
         val user = usuariSeleccionat_per_plantes!!
-        var plantesSeleccionades by remember { mutableStateOf(user.idsPlantes?.toSet() ?: emptySet()) }
+        var plantesSeleccionades by remember {
+            mutableStateOf(
+                user.idsPlantes?.toSet() ?: emptySet()
+            )
+        }
 
         AlertDialog(
             onDismissRequest = { usuariSeleccionat_per_plantes = null },
             title = { Text("Permisos de Planta") },
             text = {
                 Column {
-                    Text("Selecciona a quines plantes pot accedir ${user.nomUsuari}:", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(
+                        "Selecciona a quines plantes pot accedir ${user.nomUsuari}:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     plantes.filter { it.activa }.forEach { planta ->
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Checkbox(
                                 checked = plantesSeleccionades.contains(planta.id_planta),
                                 onCheckedChange = { isChecked ->
-                                    plantesSeleccionades = if (isChecked) plantesSeleccionades + planta.id_planta else plantesSeleccionades - planta.id_planta
+                                    plantesSeleccionades =
+                                        if (isChecked) plantesSeleccionades + planta.id_planta else plantesSeleccionades - planta.id_planta
                                 }
                             )
                             Text(text = planta.nom_planta)
@@ -393,7 +530,13 @@ fun GestioUsuarisScreen(
                 Button(onClick = {
                     scope.launch {
                         try {
-                            val request = UpdateUsuariDto(user.id, null, null, null, plantesSeleccionades.toList())
+                            val request = UpdateUsuariDto(
+                                user.id,
+                                null,
+                                null,
+                                null,
+                                plantesSeleccionades.toList()
+                            )
                             RetrofitClient.instance.actualitzarUsuari("Bearer $token", request)
                             recarregarDades()
                         } finally {
@@ -402,7 +545,13 @@ fun GestioUsuarisScreen(
                     }
                 }) { Text("GUARDAR") }
             },
-            dismissButton = { TextButton(onClick = { usuariSeleccionat_per_plantes = null }) { Text("Cancel·lar") } }
+            dismissButton = {
+                TextButton(onClick = { usuariSeleccionat_per_plantes = null }) {
+                    Text(
+                        "Cancel·lar"
+                    )
+                }
+            }
         )
     }
 }

@@ -3,8 +3,10 @@ package com.noel.energyapp.network
 import com.noel.energyapp.data.ChangePasswordRequest
 import com.noel.energyapp.data.CrearUsuariDto
 import com.noel.energyapp.data.GenericResponse
+import com.noel.energyapp.data.IncidenciaVistaDto
 import com.noel.energyapp.data.LoginRequest
 import com.noel.energyapp.data.PlantaDto
+import com.noel.energyapp.data.TancarIncidenciaDto
 import com.noel.energyapp.data.UpdatePlantesActivesDto
 import com.noel.energyapp.data.UpdateUsuariDto
 import com.noel.energyapp.data.UsuariResumDto
@@ -64,5 +66,21 @@ interface ApiService {
         @Body request: UpdateUsuariDto
     ): Response<GenericResponse>
 
+    // ==========================================
+    // RUTINES D'INCIDÈNCIES (ALARMES)
+    // ==========================================
 
+    @GET("incidencia/actives")
+    suspend fun getAlarmesActives(@Header("Authorization") token: String): Response<List<IncidenciaVistaDto>>
+
+    @GET("incidencia/historic")
+    suspend fun getHistoricAlarmes(@Header("Authorization") token: String): Response<List<IncidenciaVistaDto>>
+
+    // Retorna Response<Unit> perquè l'API només torna un OK i un missatge, sense dades extra.
+    // Si fas servir una classe teva com GenericResponse, pots canviar Unit per GenericResponse.
+    @POST("incidencia/tancar")
+    suspend fun tancarIncidencia(
+        @Header("Authorization") token: String,
+        @Body request: TancarIncidenciaDto
+    ): Response<Unit>
 }
