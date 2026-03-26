@@ -19,7 +19,7 @@ sealed class Screen(val route: String) {
     object GestioUsuaris : Screen("gestio_usuaris")
 
     // Rutes per a la gestio d'alarmes
-    object AlarmesActives : Screen("alarmes_actives")
+    //object AlarmesActives : Screen("alarmes_actives")
 
     // Ruta per a tancar incidencia
     object TancarIncidencia : Screen("tancar_incidencia/{incidenciaId}") {
@@ -31,7 +31,39 @@ sealed class Screen(val route: String) {
     object ChangePassword : Screen("change_password")
 
     // Ruta per a l'historial d'alarmes
-    object AlarmesHistoric : Screen("alarmes_historic")
+    //object AlarmesHistoric : Screen("alarmes_historic")
+
+    // Ruta per al detall d'una alarma tancada
+    object HistoricAlarmaDetail : Screen("historic_alarma_detail/{alarmaId}") {
+        fun createRoute(alarmaId: Int) = "historic_alarma_detail/$alarmaId"
+    }
+
+    // Rutes per a les alarmes, ara demanen la Planta
+    object AlarmesActives : Screen("alarmes_actives/{plantaId}") {
+        fun createRoute(plantaId: Int) = "alarmes_actives/$plantaId"
+    }
+
+    object AlarmesHistoric : Screen("alarmes_historic/{plantaId}") {
+        fun createRoute(plantaId: Int) = "alarmes_historic/$plantaId"
+    }
+
+    // Ruta de la Gràfica de Consum
+    object ConsumGrafica : Screen("consum_grafica/{plantaId}/{plantaNom}") {
+        fun createRoute(plantaId: Int, plantaNom: String) = "consum_grafica/$plantaId/$plantaNom"
+    }
+    
+    // Ruta dels Consums Actuals en Viu
+    object ConsumsActuals : Screen("consums_actuals/{plantaNom}") {
+        fun createRoute(plantaNom: String) = "consums_actuals/$plantaNom"
+    }
+
+    // Ruta per a Ajustos i Perfil d'Usuari
+    object Ajustos : Screen("ajustos")
+
+    // Ruta per a la Gestió de Registres de Consum (Unitari per dia)
+    object ConsumRegistres : Screen("consum_registres/{plantaId}/{plantaNom}") {
+        fun createRoute(plantaId: Int, plantaNom: String) = "consum_registres/$plantaId/$plantaNom"
+    }
 }
 
 

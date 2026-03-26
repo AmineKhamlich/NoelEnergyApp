@@ -29,6 +29,7 @@ import java.util.Locale
 fun AlarmesActivesScreen(
     paddingValues: PaddingValues,
     onBackClick: () -> Unit,
+    plantaId: Int,
     onNavigateToTancarAlarma: (Int) -> Unit // Passem l'ID de l'alarma a la pantalla de tancar
 ) {
     val context = LocalContext.current
@@ -42,7 +43,7 @@ fun AlarmesActivesScreen(
     // Carreguem les dades només obrir la pantalla
     LaunchedEffect(Unit) {
         try {
-            val response = RetrofitClient.instance.getAlarmesActives("Bearer $token")
+            val response = RetrofitClient.instance.getAlarmesActives("Bearer $token", plantaId)
             if (response.isSuccessful) {
                 alarmes = response.body() ?: emptyList()
             } else {
@@ -58,8 +59,6 @@ fun AlarmesActivesScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "ALARMES ACTIVES",
-        hasMenu = false, // O true si vols que hi hagi el menú lateral aquí
-        onBackClick = onBackClick,
         verticalArrangement = Arrangement.Top
     ) {
         if (isLoading) {
@@ -68,7 +67,7 @@ fun AlarmesActivesScreen(
             }
         } else if (alarmes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Totes les plantes estan OK! 🎉", style = MaterialTheme.typography.titleLarge, color = Color.Gray)
+                Text("No hi ha alarmes actives", style = MaterialTheme.typography.titleLarge, color = Color.Gray)
             }
         } else {
             LazyColumn(

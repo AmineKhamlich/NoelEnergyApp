@@ -38,9 +38,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun GestioPlantesScreen(
     paddingValues: PaddingValues,
-    onBackClick: () -> Unit,
-    onNavigateToGestioPlantes: () -> Unit,
-    onNavigateToGestioUsuaris: () -> Unit
+    onBackClick: () -> Unit
 ) {
 
     val context = LocalContext.current
@@ -79,10 +77,6 @@ fun GestioPlantesScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "GESTIÓ PLANTES",
-        hasMenu = true,
-        onBackClick = onBackClick,
-        onNavigateToGestioPlantes = onNavigateToGestioPlantes,
-        onNavigateToGestioUsuaris = onNavigateToGestioUsuaris,
         verticalArrangement = Arrangement.Top
     ) {
 

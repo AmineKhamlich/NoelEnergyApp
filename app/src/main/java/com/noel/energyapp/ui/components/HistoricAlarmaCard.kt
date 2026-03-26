@@ -1,5 +1,6 @@
 package com.noel.energyapp.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -11,23 +12,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.noel.energyapp.data.IncidenciaVistaDto
+import com.noel.energyapp.ui.theme.DarkSlate
+import com.noel.energyapp.ui.theme.StatusGreen
+import com.noel.energyapp.ui.theme.SurfaceLight
 
 @Composable
 fun HistoricAlarmaCard(
-    alarma: IncidenciaVistaDto
+    alarma: IncidenciaVistaDto,
+    onCardClick: () -> Unit = {}
 ) {
-    // Utilitzem colors neutres (grisos) per indicar que és una alarma tancada
-    val cardColor = Color(0xFFF5F5F5) // Gris molt clar
-    val contentColor = Color(0xFF455A64) // Gris blavós fosc per al text
+    val cardColor    = SurfaceLight
+    val contentColor = DarkSlate
+    val greenColor   = StatusGreen
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCardClick() },
         colors = CardDefaults.cardColors(containerColor = cardColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         shape = MaterialTheme.shapes.medium
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // CAPÇALERA: Icona de fet + Estat + Data Tancament
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+
+            // ── CAPÇALERA ─────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -35,62 +43,131 @@ fun HistoricAlarmaCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = "Tancada",
-                        tint = Color(0xFF4CAF50) // Verd per indicar Check
+                        Icons.Default.CheckCircle, null, tint = greenColor,
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "TANCADA",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4CAF50)
+                        "TANCADA", style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold, color = greenColor
                     )
                 }
+                Surface(
+                    color = contentColor.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        alarma.gravetat, style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        color = contentColor.copy(alpha = 0.7f)
+                    )
+                }
+            }
 
-                // Data de quan es va resoldre
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
+
+            // ── UBICACIÓ I DESCRIPCIÓ ─────────────────────────────────────
+            Text(
+                "📍 ${alarma.ubicacio}", style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (!alarma.descripcioComptador.isNullOrBlank()) {
                 Text(
-                    text = "Resolta: ${alarma.dataTancament ?: "Sense data"}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor.copy(alpha = 0.7f)
+                    alarma.descripcioComptador, style = MaterialTheme.typography.bodySmall,
+                    color = contentColor.copy(alpha = 0.6f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
 
-            // TÍTOL I MOTIU
-            Text(
-                text = alarma.detallAlarma,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // UBICACIÓ I EQUIP
-            Text(
-                text = "📍 ${alarma.ubicacio} | ⚙️ ${alarma.comptador}",
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.8f)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(color = contentColor.copy(alpha = 0.1f))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // INFORMACIÓ DEL CONSUM QUE VA PROVOCAR L'ALARMA
+            // ── DATES ────────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Consum registrat", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.6f))
-                    Text("${String.format("%.2f", alarma.consumRealAvui)} m³", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Data notificació", style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.55f)
+                    )
+                    Text(
+                        alarma.dataCreacio ?: "—",
+                        style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold
+                    )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Límits configurats", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.6f))
-                    Text("${alarma.limitH ?: "-"} / ${alarma.limitHH ?: "-"} m³", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Data tancament", style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.55f)
+                    )
+                    Text(
+                        alarma.dataTancament ?: "—",
+                        style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold
+                    )
                 }
+            }
+
+            if (alarma.tempsTranscorregut.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Row {
+                    Text(
+                        "Temps transcurregut: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = contentColor.copy(alpha = 0.65f)
+                    )
+                    Text(
+                        alarma.tempsTranscorregut,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = contentColor.copy(alpha = 0.65f)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
+
+            // ── CONSUM I SETPOINTS ───────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        "Consum dia notificació", style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.55f)
+                    )
+                    Text(
+                        "${String.format("%.2f", alarma.consumDiaAlarma)} m³",
+                        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "Límits H / HH", style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.55f)
+                    )
+                    Text(
+                        "${alarma.limitH ?: "—"} / ${alarma.limitHH ?: "—"} m³",
+                        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // ── TÈCNIC ───────────────────────────────────────────────────
+            if (!alarma.tecnicTancament.isNullOrBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Tancat per: ${alarma.tecnicTancament}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor.copy(alpha = 0.65f)
+                )
             }
         }
     }

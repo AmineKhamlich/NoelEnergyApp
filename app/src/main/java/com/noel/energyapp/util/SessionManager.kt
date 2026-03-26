@@ -23,8 +23,14 @@ class SessionManager(context: Context) {
         const val USER_NAME = "user_name"           // Nick de l'usuari (ex: admin)
         const val USER_REAL_NAME = "user_real_name" // Nom real (ex: Joan Petit) - NOU!
         const val USER_ROLE = "user_role"
+        const val USER_ROLE_ID = "user_role_id" // NOU!
         const val ASSIGNED_PLANTS = "assigned_plants"
         const val MUST_CHANGE_PASSWORD = "must_change_password"
+        
+        // --- NOU 2026: Preferències d'UI/UX ---
+        const val THEME_PREFERENCE = "theme_preference" // "LIGHT", "DARK", "AUTO"
+        const val ANIMATIONS_ENABLED = "animations_enabled" // true/false
+        const val DEFAULT_PLANT_ID = "default_plant_id" // int
     }
 
     /**
@@ -37,6 +43,7 @@ class SessionManager(context: Context) {
         name: String,
         realName: String, // NOU: Passem el nom real
         role: String,
+        roleId: Int, // NOU!
         assignedPlants: String?,
         mustChangePassword: Boolean
     ) {
@@ -44,8 +51,9 @@ class SessionManager(context: Context) {
             putInt(USER_ID, userId)
             putString(USER_TOKEN, token)
             putString(USER_NAME, name)
-            putString(USER_REAL_NAME, realName) // Guardem el nom real per a la salutació
+            putString(USER_REAL_NAME, realName)
             putString(USER_ROLE, role)
+            putInt(USER_ROLE_ID, roleId) // Guardem l'ID numèric
             putString(ASSIGNED_PLANTS, assignedPlants)
             putBoolean(MUST_CHANGE_PASSWORD, mustChangePassword)
         }
@@ -77,6 +85,9 @@ class SessionManager(context: Context) {
     /** Retorna el Rol (ADMIN, SUPERVISOR, TÈCNIC) per gestionar permisos de pantalles */
     fun fetchUserRole(): String? = prefs.getString(USER_ROLE, null)
 
+    /** Retorna l'ID del Rol (1, 2, 3) per seguretat en els permisos */
+    fun fetchUserRoleId(): Int = prefs.getInt(USER_ROLE_ID, -1)
+
     /** Retorna si l'usuari té pendent el canvi de contrasenya obligatori */
     fun fetchMustChangePassword(): Boolean = prefs.getBoolean(MUST_CHANGE_PASSWORD, false)
 
@@ -92,6 +103,23 @@ class SessionManager(context: Context) {
         // Separem per comes, netegem espais i convertim cada ID a Enter
         return idsString.split(",").mapNotNull { it.trim().toIntOrNull() }
     }
+
+    // --- Preferències UI/UX ---
+
+    fun saveThemePreference(theme: String) {
+        prefs.edit { putString(THEME_PREFERENCE, theme) }
+    }
+    fun fetchThemePreference(): String = prefs.getString(THEME_PREFERENCE, "AUTO") ?: "AUTO"
+
+    fun saveAnimationsEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(ANIMATIONS_ENABLED, enabled) }
+    }
+    fun fetchAnimationsEnabled(): Boolean = prefs.getBoolean(ANIMATIONS_ENABLED, true)
+
+    fun saveDefaultPlant(plantaId: Int) {
+        prefs.edit { putInt(DEFAULT_PLANT_ID, plantaId) }
+    }
+    fun fetchDefaultPlant(): Int = prefs.getInt(DEFAULT_PLANT_ID, -1)
 
     /**
      * Esborra TOTA la informació de la sessió.

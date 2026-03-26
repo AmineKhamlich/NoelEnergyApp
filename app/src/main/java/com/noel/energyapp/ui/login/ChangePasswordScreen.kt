@@ -58,7 +58,6 @@ fun ChangePasswordScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "CANVI OBLIGATORI",
-        hasMenu = false,
         verticalArrangement = Arrangement.Top
     ) {
         // Fem que el contingut sigui scrollable per si el teclat ocupa massa espai

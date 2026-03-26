@@ -1,8 +1,11 @@
 package com.noel.energyapp.network
 
 import com.noel.energyapp.data.ChangePasswordRequest
+import com.noel.energyapp.data.ConsumFiltratDto
 import com.noel.energyapp.data.CrearUsuariDto
+import com.noel.energyapp.data.DimCntDto
 import com.noel.energyapp.data.GenericResponse
+import com.noel.energyapp.data.FotoResponse
 import com.noel.energyapp.data.IncidenciaVistaDto
 import com.noel.energyapp.data.LoginRequest
 import com.noel.energyapp.data.PlantaDto
@@ -16,6 +19,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 
 interface ApiService {
@@ -68,14 +72,26 @@ interface ApiService {
     ): Response<GenericResponse>
 
     // ==========================================
-    // RUTINES D'INCIDÈNCIES (ALARMES)
+    // RUTINES D'INCIDÈNCIES (ALARMES FILTRADES)
     // ==========================================
-
     @GET("incidencia/actives")
-    suspend fun getAlarmesActives(@Header("Authorization") token: String): Response<List<IncidenciaVistaDto>>
+    suspend fun getAlarmesActives(
+        @Header("Authorization") token: String,
+        @Query("plantaId") plantaId: Int? = null
+    ): Response<List<IncidenciaVistaDto>>
 
     @GET("incidencia/historic")
-    suspend fun getHistoricAlarmes(@Header("Authorization") token: String): Response<List<IncidenciaVistaDto>>
+    suspend fun getHistoricAlarmes(
+        @Header("Authorization") token: String,
+        @Query("plantaId") plantaId: Int? = null
+    ): Response<List<IncidenciaVistaDto>>
+
+    // Retorna la foto d'una alarma històrica com a Base64
+    @GET("incidencia/foto/{alarmaId}")
+    suspend fun getFotoAlarma(
+        @Header("Authorization") token: String,
+        @retrofit2.http.Path("alarmaId") alarmaId: Int
+    ): Response<FotoResponse>
 
     // Retorna Response<Unit> perquè l'API només torna un OK i un missatge, sense dades extra.
     // Si fas servir una classe teva com GenericResponse, pots canviar Unit per GenericResponse.
@@ -84,4 +100,31 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: TancarIncidenciaDto
     ): Response<GenericResponse>
+
+    // ==========================================
+    // CONSUMS I COMPTADORS
+    // ==========================================
+    @GET("FactCntHistorianV2/filtrat")
+    suspend fun getConsumFiltrat(
+        @Header("Authorization") token: String,
+        @Query("idComptador") idComptador: Int,
+        @Query("start") start: String,
+        @Query("end") end: String
+    ): Response<List<ConsumFiltratDto>>
+
+    @GET("DimCnt/planta/{plantaNom}")
+    suspend fun getComptadorsPerPlanta(
+        @Header("Authorization") token: String,
+        @retrofit2.http.Path("plantaNom") plantaNom: String
+    ): Response<List<DimCntDto>>
+
+    // ==========================================
+    // CONSUMS LIVE (REAL-TIME)
+    // ==========================================
+    @GET("FactCntHistorianV2/live")
+    suspend fun getLiveValue(
+        @Header("Authorization") token: String,
+        @Query("tagName") tagName: String
+    ): Response<Double>
+
 }

@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.noel.energyapp.data.IncidenciaVistaDto
+import com.noel.energyapp.ui.theme.AlarmAlertaOrange
+import com.noel.energyapp.ui.theme.AlarmAvisYellow
+import com.noel.energyapp.ui.theme.AlarmCriticaDark
+import com.noel.energyapp.ui.theme.AlarmCriticaRed
 import java.util.Locale
 
 @Composable
@@ -26,8 +30,8 @@ fun AlarmaCard(
 
     // Anima el color entre Vermell i Granat Fosc cada 800 mil·lisegons
     val animatedCriticalColor by infiniteTransition.animateColor(
-        initialValue = Color(0xFFD32F2F), // Vermell perill
-        targetValue = Color(0xFF7F0000),  // Granat molt fosc
+        initialValue = AlarmCriticaRed,
+        targetValue = AlarmCriticaDark,
         animationSpec = infiniteRepeatable(
             animation = tween(800, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
@@ -44,8 +48,8 @@ fun AlarmaCard(
     // 2. Assignem els colors segons el text de la base de dades
     val cardColor = when (gravetatNeta) {
         "ALERTA CRITICA" -> animatedCriticalColor // Apliquem l'animació aquí!
-        "ALERTA", "ALARMA" -> Color(0xFFF57C00) // Taronja
-        else -> Color(0xFFFBC02D) // Groc (Avís)
+        "ALERTA", "ALARMA" -> AlarmAlertaOrange
+        else                -> AlarmAvisYellow
     }
 
     val contentColor = Color.White
@@ -120,8 +124,8 @@ fun AlarmaCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
-                    // Si és crítica, posem el text del botó vermell fix perquè es llegeixi bé
-                    contentColor = if (gravetatNeta == "ALERTA CRITICA") Color(0xFFD32F2F) else cardColor                )
+                    contentColor = if (gravetatNeta == "ALERTA CRITICA") Color(0xFFD32F2F) else cardColor
+                )
             ) {
                 Text("GESTIONAR INCIDÈNCIA", fontWeight = FontWeight.Bold)
             }

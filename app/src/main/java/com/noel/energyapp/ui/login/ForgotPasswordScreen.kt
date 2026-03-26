@@ -44,7 +44,6 @@ fun ForgotPasswordScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "CANVI OBLIGATORI",
-        hasMenu = false,
         verticalArrangement = Arrangement.Top
     ) {
 

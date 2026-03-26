@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "350912598632",
+    "project_id": "noel-energy-app",
+    "storage_bucket": "noel-energy-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350912598632:android:772c131a2c2792f954e1dd",
+        "android_client_info": {
+          "package_name": "com.noel.energyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-XHuj6BF9Z-1Bx3LUjGWwQ8B4MZOBD9g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

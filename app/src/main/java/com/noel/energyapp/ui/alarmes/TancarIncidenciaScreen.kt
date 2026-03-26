@@ -87,8 +87,6 @@ fun TancarIncidenciaScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "TANCAR INCIDÈNCIA #$incidenciaId",
-        hasMenu = false,
-        onBackClick = onBackClick,
         verticalArrangement = Arrangement.Top
     ) {
         Column(

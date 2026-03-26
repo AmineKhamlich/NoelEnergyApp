@@ -25,6 +25,7 @@ import com.noel.energyapp.data.UpdateUsuariDto
 import com.noel.energyapp.data.UsuariResumDto
 import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.NoelScreen
+import com.noel.energyapp.ui.theme.StatusGreenLight
 import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
 
@@ -48,9 +49,7 @@ fun rolVisualToDB(rolUI: String): String {
 @Composable
 fun GestioUsuarisScreen(
     paddingValues: PaddingValues,
-    onBackClick: () -> Unit,
-    onNavigateToGestioPlantes: () -> Unit,
-    onNavigateToGestioUsuaris: () -> Unit
+    onBackClick: () -> Unit
 ) {
     // --- 1. CONFIGURACIÓ I CONTEXT ---
     val context = LocalContext.current
@@ -107,10 +106,6 @@ fun GestioUsuarisScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "GESTIÓ D'USUARIS",
-        hasMenu = true,
-        onBackClick = onBackClick,
-        onNavigateToGestioPlantes = onNavigateToGestioPlantes,
-        onNavigateToGestioUsuaris = onNavigateToGestioUsuaris,
         verticalArrangement = Arrangement.Top
     ) {
         // --- BARRA DE RECERCA I BOTÓ D'AFEGIR ---
@@ -203,7 +198,7 @@ fun GestioUsuarisScreen(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = when {
                                             esAdmin -> Color.Gray // Si és admin, ho posem en gris (protegit)
-                                            isActiu -> Color(0xFF4CAF50) // Verd si és actiu
+                                            isActiu -> StatusGreenLight
                                             else -> MaterialTheme.colorScheme.error // Vermell si és inactiu
                                         },
                                         modifier = Modifier.padding(end = 4.dp)
@@ -241,7 +236,7 @@ fun GestioUsuarisScreen(
                                         },
                                         // Podem posar colors diferents quan està bloquejat
                                         colors = SwitchDefaults.colors(
-                                            disabledCheckedTrackColor = Color(0xFF4CAF50).copy(alpha = 0.5f), // Verd claret si està ON però bloquejat
+                                            disabledCheckedTrackColor = StatusGreenLight.copy(alpha = 0.5f),
                                             disabledCheckedThumbColor = Color.White
                                         )
                                     )

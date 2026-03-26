@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import com.noel.energyapp.ui.components.NoelTextField
 import com.noel.energyapp.data.IncidenciaVistaDto
 import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.HistoricAlarmaCard
@@ -20,7 +23,9 @@ import com.noel.energyapp.util.SessionManager
 @Composable
 fun AlarmesHistoricScreen(
     paddingValues: PaddingValues,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    plantaId: Int,
+    onAlarmaClick: (Int) -> Unit
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -28,12 +33,17 @@ fun AlarmesHistoricScreen(
 
     var alarmes by remember { mutableStateOf<List<IncidenciaVistaDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var searchQuery by remember { mutableStateOf("") }
 
-    // Carreguem l'històric en obrir la pantalla
+    val filteredAlarmes = alarmes.filter {
+        it.tecnicTancament?.contains(searchQuery, ignoreCase = true) == true ||
+        it.comptador.contains(searchQuery, ignoreCase = true) ||
+        it.descripcioComptador?.contains(searchQuery, ignoreCase = true) == true
+    }
+
     LaunchedEffect(Unit) {
         try {
-            // Cridem al mètode del servidor que ja tens preparat
-            val response = RetrofitClient.instance.getHistoricAlarmes("Bearer $token")
+            val response = RetrofitClient.instance.getHistoricAlarmes("Bearer $token", plantaId)
             if (response.isSuccessful) {
                 alarmes = response.body() ?: emptyList()
             } else {
@@ -49,30 +59,43 @@ fun AlarmesHistoricScreen(
     NoelScreen(
         paddingValues = paddingValues,
         title = "HISTÒRIC D'ALARMES",
-        hasMenu = false,
-        onBackClick = onBackClick,
         verticalArrangement = Arrangement.Top
     ) {
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (alarmes.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "No hi ha cap alarma tancada encara. ✨",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
-                )
-            }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(alarmes) { alarma ->
-                    HistoricAlarmaCard(alarma = alarma)
+            Column(modifier = Modifier.fillMaxSize()) {
+                NoelTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = "Cercar per usuari o comptador...",
+                    trailingIcon = { Icon(Icons.Default.Search, contentDescription = "Cercar") },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+
+                if (filteredAlarmes.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = if (searchQuery.isNotEmpty()) "No s'han trobat alarmes amb aquesta cerca." else "No hi ha cap alarma tancada",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().weight(1f),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredAlarmes) { alarma ->
+                            HistoricAlarmaCard(
+                                alarma = alarma,
+                                onCardClick = { onAlarmaClick(alarma.id) }
+                            )
+                        }
+                    }
                 }
             }
         }
