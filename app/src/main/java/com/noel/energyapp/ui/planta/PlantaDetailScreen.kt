@@ -111,8 +111,8 @@ fun PlantaDetailScreen(
                 )
 
                 // NOVEL BOTO: GESTIÓ DE REGISTRES (Basat en l'ID del Rol)
-                // 1 = ADMIN, 2 = SUPERVISOR
-                if (userRoleId == 1 || userRoleId == 2) {
+                // 1 = ADMIN
+                if (userRoleId == 1) {
                     NoelPremiumButton(
                         title = "Gestió de Registres",
                         subtitle = "Consulta i correcció per dia unitari",
