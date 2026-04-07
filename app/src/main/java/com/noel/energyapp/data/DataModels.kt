@@ -14,3 +14,11 @@ data class DimCntDto(
     val planta: String?
 )
 
+//
+data class FactCntHistorianDto(
+    val id: Int,
+    val valorDiferencial: Double,
+    val valorDifMod: Double?,
+    val fechaFin: String? = null
+)
+

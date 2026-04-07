@@ -57,6 +57,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     // Retrofit: Per connectar amb la teva API (172.20.1.46)
+    implementation("io.coil-kt:coil-compose:2.5.0")
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     // BCrypt: Per si haig de fer comprovacions locals (opcional)
@@ -64,6 +65,8 @@ dependencies {
     // Navegació: Per poder saltar del Login al Dashboard
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation("com.microsoft.signalr:signalr:8.0.0")
+
 
     // Import the Firebase BoM
     implementation(platform(libs.firebase.bom))
@@ -72,7 +75,6 @@ dependencies {
     // TODO: Add the dependencies for Firebase products you want to use
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation(libs.firebase.analytics)
-
 
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries

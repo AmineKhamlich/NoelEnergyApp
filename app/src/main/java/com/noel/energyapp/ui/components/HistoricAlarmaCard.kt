@@ -1,5 +1,7 @@
 package com.noel.energyapp.ui.components
 
+import com.noel.energyapp.ui.theme.isAppInDarkTheme as isSystemInDarkTheme
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -21,8 +23,11 @@ fun HistoricAlarmaCard(
     alarma: IncidenciaVistaDto,
     onCardClick: () -> Unit = {}
 ) {
-    val cardColor    = SurfaceLight
-    val contentColor = DarkSlate
+    // Colors dinàmics igual que els del Dashboard
+    val isDark = isSystemInDarkTheme()
+    val cardColor = if (isDark) Color.White.copy(alpha = 0.05f) else SurfaceLight
+    val contentColor = if (isDark) Color.White else DarkSlate
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.2f) else Color.Transparent
     val greenColor   = StatusGreen
 
     Card(
@@ -30,7 +35,8 @@ fun HistoricAlarmaCard(
             .fillMaxWidth()
             .clickable { onCardClick() },
         colors = CardDefaults.cardColors(containerColor = cardColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 3.dp),
+        border = BorderStroke(1.dp, borderColor),
         shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
@@ -132,7 +138,7 @@ fun HistoricAlarmaCard(
             HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
             Spacer(Modifier.height(10.dp))
 
-            // ── CONSUM I SETPOINTS ───────────────────────────────────────
+            // ── CONSUM I LÍMITS ───────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween

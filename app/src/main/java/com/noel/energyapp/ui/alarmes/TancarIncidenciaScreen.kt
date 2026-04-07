@@ -2,12 +2,10 @@ package com.noel.energyapp.ui.alarmes
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.util.Base64
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,20 +17,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.noel.energyapp.data.TancarIncidenciaDto
+import androidx.core.content.FileProvider
 import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
+import com.noel.energyapp.ui.components.NoelTextField
 import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import com.noel.energyapp.data.GenericResponse
-import com.noel.energyapp.ui.components.NoelTextField
-
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import coil.compose.AsyncImage
+import java.io.File
 
 @Composable
 fun TancarIncidenciaScreen(
@@ -48,40 +48,41 @@ fun TancarIncidenciaScreen(
 
     var descripcio by remember { mutableStateOf("") }
     var solucio by remember { mutableStateOf("") }
-    var fotoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    
+    // NOU SISTEMA ARXIUS (Rebutgem el bitmap mini)
+    var fotoFile by remember { mutableStateOf<File?>(null) }
+    var pendingUri by remember { mutableStateOf<Uri?>(null) }
+    var displayUri by remember { mutableStateOf<Uri?>(null) }
+    
     var isLoading by remember { mutableStateOf(false) }
 
-    // 1. Llançador de la Càmera
+    // 1. Llançador de Càmera ALTA DEFINICIÓ (Demana una URI prèvia per saber on guardar la foto final)
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            fotoBitmap = bitmap
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success && pendingUri != null) {
+            displayUri = pendingUri
+            // La variable fotoFile ja conté l'arxiu emplenat
         }
     }
 
-    // 2. NOU: Llançador per demanar permís de càmera a l'usuari (Pop-up de seguretat)
+    // Identificar el nom del FileProvider creat
+    val authority = "${context.packageName}.provider"
+
+    // 2. Llançador per demanar permís
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Si l'usuari diu "Sí", intentem obrir la càmera
-            try {
-                cameraLauncher.launch(null)
-            } catch (e: Exception) {
-                Toast.makeText(context, "No s'ha trobat cap app de càmera al dispositiu", Toast.LENGTH_SHORT).show()
-            }
+            // Generem l'arxiu temporal a la memòria cau i demanem la URI
+            val f = File(context.externalCacheDir, "incidencia_${System.currentTimeMillis()}.jpg")
+            fotoFile = f
+            val uri = FileProvider.getUriForFile(context, authority, f)
+            pendingUri = uri
+            try { cameraLauncher.launch(uri) } catch (e: Exception) { Toast.makeText(context, "Sense càmera", Toast.LENGTH_SHORT).show() }
         } else {
-            // Si diu "No", l'avisem
-            Toast.makeText(context, "Cal donar permís per poder fer la fotografia", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Cal permís per la foto", Toast.LENGTH_LONG).show()
         }
-    }
-
-    fun encodeBitmapToBase64(bitmap: Bitmap): String {
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
-        // Utilitzem NO_WRAP per evitar salts de línia (\n) que trenquen el JSON a l'enviar-ho a C#
-        return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
     }
 
     NoelScreen(
@@ -97,8 +98,6 @@ fun TancarIncidenciaScreen(
                 .padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // CAMP DE DESCRIPCIÓ AMB EL TEU ESTIL NOEL
             NoelTextField(
                 value = descripcio,
                 onValueChange = { descripcio = it },
@@ -109,7 +108,6 @@ fun TancarIncidenciaScreen(
                 isError = descripcio.isBlank()
             )
 
-            // CAMP DE SOLUCIÓ AMB EL TEU ESTIL NOEL
             NoelTextField(
                 value = solucio,
                 onValueChange = { solucio = it },
@@ -121,23 +119,19 @@ fun TancarIncidenciaScreen(
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Text("Adjuntar Fotografia (Alta Def. per Càmera)", style = MaterialTheme.typography.titleMedium)
 
-            Text("Adjuntar Fotografia", style = MaterialTheme.typography.titleMedium)
-
-            if (fotoBitmap == null) {
+            if (displayUri == null) {
                 OutlinedButton(
                     onClick = {
-                        // COMPROVACIÓ DE SEGURETAT DE LA CÀMERA
                         val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
                         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                            // Si ja teníem permís d'abans, obrim directe
-                            try {
-                                cameraLauncher.launch(null)
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "No s'ha trobat cap app de càmera", Toast.LENGTH_SHORT).show()
-                            }
+                            val f = File(context.externalCacheDir, "incidencia_${System.currentTimeMillis()}.jpg")
+                            fotoFile = f
+                            val uri = FileProvider.getUriForFile(context, authority, f)
+                            pendingUri = uri
+                            cameraLauncher.launch(uri)
                         } else {
-                            // Si no tenim permís, llancem el pop-up de l'Android
                             permissionLauncher.launch(Manifest.permission.CAMERA)
                         }
                     },
@@ -149,13 +143,16 @@ fun TancarIncidenciaScreen(
                 }
             } else {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Image(
-                        bitmap = fotoBitmap!!.asImageBitmap(),
-                        contentDescription = "Foto",
+                    AsyncImage(
+                        model = displayUri,
+                        contentDescription = "Foto capturada",
                         modifier = Modifier.height(200.dp)
                     )
                     IconButton(
-                        onClick = { fotoBitmap = null },
+                        onClick = { 
+                            displayUri = null 
+                            fotoFile = null
+                        },
                         modifier = Modifier.align(Alignment.TopEnd)
                     ) {
                         Icon(Icons.Default.Close, contentDescription = "Esborrar foto", tint = Color.Red)
@@ -173,23 +170,28 @@ fun TancarIncidenciaScreen(
                     isLoading = true
                     scope.launch {
                         try {
-                            val base64Image = fotoBitmap?.let { encodeBitmapToBase64(it) }
-                            val request = TancarIncidenciaDto(
-                                idIncidencia = incidenciaId,
-                                descripcioIncidencia = descripcio,
-                                solucioAdaptada = solucio,
-                                fotoBase64 = base64Image
-                            )
-                            val response = RetrofitClient.instance.tancarIncidencia("Bearer $token", request)
+                            // Creació del formulari Multipart
+                            val idIncidenciaBody = incidenciaId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                            val descBody = descripcio.toRequestBody("text/plain".toMediaTypeOrNull())
+                            val solBody = solucio.toRequestBody("text/plain".toMediaTypeOrNull())
+                            
+                            var fotoPart: MultipartBody.Part? = null
+                            if (fotoFile != null && fotoFile!!.exists() && displayUri != null) {
+                                val reqFile = fotoFile!!.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                                fotoPart = MultipartBody.Part.createFormData("fotoFile", fotoFile!!.name, reqFile)
+                            }
+
+                            val response = RetrofitClient.instance.tancarIncidencia("Bearer $token", idIncidenciaBody, descBody, solBody, fotoPart)
 
                             if (response.isSuccessful) {
                                 Toast.makeText(context, "Incidència Tancada!", Toast.LENGTH_SHORT).show()
                                 onSuccess()
                             } else {
-                                Toast.makeText(context, "Error al tancar", Toast.LENGTH_SHORT).show()
+                                val errorStr = response.errorBody()?.string() ?: "Error desconegut"
+                                Toast.makeText(context, "Error: $errorStr", Toast.LENGTH_LONG).show()
                             }
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Error de connexió", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Error de connexió: ${e.message}", Toast.LENGTH_LONG).show()
                         } finally {
                             isLoading = false
                         }

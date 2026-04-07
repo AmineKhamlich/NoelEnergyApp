@@ -4,6 +4,7 @@ import com.noel.energyapp.data.ChangePasswordRequest
 import com.noel.energyapp.data.ConsumFiltratDto
 import com.noel.energyapp.data.CrearUsuariDto
 import com.noel.energyapp.data.DimCntDto
+import com.noel.energyapp.data.FactCntHistorianDto
 import com.noel.energyapp.data.GenericResponse
 import com.noel.energyapp.data.FotoResponse
 import com.noel.energyapp.data.IncidenciaVistaDto
@@ -17,6 +18,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
@@ -95,10 +97,14 @@ interface ApiService {
 
     // Retorna Response<Unit> perquè l'API només torna un OK i un missatge, sense dades extra.
     // Si fas servir una classe teva com GenericResponse, pots canviar Unit per GenericResponse.
+    @Multipart
     @POST("incidencia/tancar")
     suspend fun tancarIncidencia(
         @Header("Authorization") token: String,
-        @Body request: TancarIncidenciaDto
+        @retrofit2.http.Part("IdIncidencia") idIncidencia: okhttp3.RequestBody,
+        @retrofit2.http.Part("DescripcioIncidencia") descripcioIncidencia: okhttp3.RequestBody,
+        @retrofit2.http.Part("SolucioAdaptada") solucioAdaptada: okhttp3.RequestBody,
+        @retrofit2.http.Part fotoFile: okhttp3.MultipartBody.Part?
     ): Response<GenericResponse>
 
     // ==========================================
@@ -126,5 +132,23 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("tagName") tagName: String
     ): Response<Double>
+
+    // ==========================================
+    //
+    // REGISTRES DE CONSUM (HISTORIC) I MODFICACIÓ DE REGISTRES
+    // ==========================================
+    @GET("FactCntHistorianV2/dia")
+    suspend fun getRegistresPerDia(
+        @Header("Authorization") token: String,
+        @Query("idContador") idComptador: Int,
+        @Query("data") data: String
+    ): Response<List<FactCntHistorianDto>>
+
+    @POST("FactCntHistorianV2/corregir")
+    suspend fun corregirValor(
+        @Header("Authorization") token: String,
+        @Query("idHistorian") idHistorian: Int,
+        @Query("nouValor") nouValor: Float?
+    ): Response<GenericResponse>
 
 }

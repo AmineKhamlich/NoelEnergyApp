@@ -1,7 +1,9 @@
 package com.noel.energyapp.ui.components
 
+import com.noel.energyapp.ui.theme.isAppInDarkTheme as isSystemInDarkTheme
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -14,10 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.noel.energyapp.data.IncidenciaVistaDto
-import com.noel.energyapp.ui.theme.AlarmAlertaOrange
-import com.noel.energyapp.ui.theme.AlarmAvisYellow
-import com.noel.energyapp.ui.theme.AlarmCriticaDark
-import com.noel.energyapp.ui.theme.AlarmCriticaRed
+import com.noel.energyapp.ui.theme.*
 import java.util.Locale
 
 @Composable
@@ -25,10 +24,14 @@ fun AlarmaCard(
     alarma: IncidenciaVistaDto,
     onGestionarClick: () -> Unit
 ) {
-    // 1. Preparem el motor d'animació per a les pampallugues
-    val infiniteTransition = rememberInfiniteTransition(label = "Blinking")
+    // 1. COLORS DINÀMICS HOMOGÈNIS A L'HISTÒRIC
+    val isDark = isSystemInDarkTheme()
+    val cardColor = if (isDark) Color.White.copy(alpha = 0.05f) else SurfaceLight
+    val contentColor = if (isDark) Color.White else DarkSlate
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.2f) else Color.Transparent
 
-    // Anima el color entre Vermell i Granat Fosc cada 800 mil·lisegons
+    // 2. MOTOR ANIMACIÓ PER LES CRÍTIQUES
+    val infiniteTransition = rememberInfiniteTransition(label = "Blinking")
     val animatedCriticalColor by infiniteTransition.animateColor(
         initialValue = AlarmCriticaRed,
         targetValue = AlarmCriticaDark,
@@ -39,96 +42,162 @@ fun AlarmaCard(
         label = "CriticalColorAnimation"
     )
 
-    // Netegem el text: ho passem a majúscules, traiem accents i espais per evitar errors
     val gravetatNeta = alarma.gravetat.uppercase(Locale.ROOT)
-        .replace("Í", "I")
-        .replace("È", "E")
-        .trim()
+        .replace("Í", "I").replace("È", "E").trim()
 
-    // 2. Assignem els colors segons el text de la base de dades
-    val cardColor = when (gravetatNeta) {
-        "ALERTA CRITICA" -> animatedCriticalColor // Apliquem l'animació aquí!
+    val statusColor = when (gravetatNeta) {
+        "ALERTA CRITICA" -> animatedCriticalColor
         "ALERTA", "ALARMA" -> AlarmAlertaOrange
         else                -> AlarmAvisYellow
     }
 
-    val contentColor = Color.White
+    val tempsFormatat = formatTempsTranscorregut(alarma.tempsTranscorregut)
 
-    // 3. Dibuixem la targeta
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = cardColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 3.dp),
+        border = BorderStroke(1.dp, borderColor),
         shape = MaterialTheme.shapes.medium
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // CAPÇALERA: Icona + Nivell de Gravetat + Temps
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+
+            // ── CAPÇALERA (Badge Groc/Vermell i Temps Faded Gray) ──
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Warning, contentDescription = "Alarma", tint = contentColor)
-                    Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    color = statusColor,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Warning, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = alarma.gravetat.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Surface(
+                    color = contentColor.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.small
+                ) {
                     Text(
-                        text = alarma.gravetat.uppercase(),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
+                        text = "Fa $tempsFormatat",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        color = contentColor.copy(alpha = 0.7f)
                     )
                 }
-                // Mostrem el temps que porta oberta
-                Text(
-                    text = "Fa ${alarma.tempsTranscorregut}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = contentColor.copy(alpha = 0.8f)
-                )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
 
-            // TÍTOL PRINCIPAL
+            // ── TÍTOL I DESCRIPCIÓ ──
             Text(
                 text = alarma.detallAlarma,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.bodyMedium, // Ara utilitza el mateix estil que l'històric
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.height(6.dp))
 
-            // DADES: Planta i Comptador
-            Text(text = "📍 Ubicació: ${alarma.ubicacio}", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "⚙️ Equip: ${alarma.comptador}", style = MaterialTheme.typography.bodyMedium)
+            // ── UBICACIÓ I EQUIP ──
+            Text(
+                "📍 ${alarma.ubicacio}", style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                "⚙️ ${alarma.comptador}", style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.6f) // Faded elegant com a l'històric
+            )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(color = contentColor.copy(alpha = 0.3f))
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
 
-            // DADES TÈCNIQUES (Límits i Consum en m³)
+            // ── DATES I TEMPS ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Data notificació", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.55f))
+                    val dataPlena = alarma.dataCreacio?.takeIf { it.isNotBlank() } 
+                        ?: alarma.horaAvisH?.takeIf { it.isNotBlank() } 
+                        ?: "—"
+                    val dataNeta = dataPlena.replace("T", " ").substringBefore('.')
+                    Text(dataNeta, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = contentColor.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
+
+            // ── 3 COLUMNES DE CONSUM I LÍMITS ──
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text("Consum Avui", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.7f))
-                    Text("${String.format("%.2f", alarma.consumRealAvui)} m³", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                    Text("Consum Actual", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.55f))
+                    Text("${String.format("%.2f", alarma.consumRealAvui)} m³", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Consum Total", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.55f))
+                    Text("${String.format("%.2f", alarma.consumDiaAlarma)} m³", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Límit H / HH", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.7f))
-                    Text("${alarma.limitH ?: "-"} / ${alarma.limitHH ?: "-"} m³", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                    Text("Límits H/HH", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.55f))
+                    Text("${alarma.limitH ?: "—"} / ${alarma.limitHH ?: "—"} m³", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // BOTÓ PER GESTIONAR
+            // ── BOTÓ GESTIONAR (De color de xoc) ──
             Button(
                 onClick = onGestionarClick,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = if (gravetatNeta == "ALERTA CRITICA") Color(0xFFD32F2F) else cardColor
+                    containerColor = statusColor,
+                    contentColor = if (statusColor == AlarmAvisYellow) Color.Black else Color.White
                 )
             ) {
                 Text("GESTIONAR INCIDÈNCIA", fontWeight = FontWeight.Bold)
             }
         }
     }
+}
+
+// ------ FUNCIÓ AJUDANT PER ALS DIES/HORES ------
+fun formatTempsTranscorregut(txtOriginal: String): String {
+    try {
+        val regex = Regex("(\\d+)h(?:\\s+(\\d+)m)?")
+        val match = regex.find(txtOriginal)
+
+        if (match != null) {
+            val totalHores = match.groupValues[1].toInt()
+            val minuts = match.groupValues.getOrNull(2)?.toIntOrNull() ?: 0
+
+            val dies = totalHores / 24
+            val horesRestants = totalHores % 24
+
+            return if (dies > 0) {
+                "$dies d, $horesRestants h, $minuts m"
+            } else {
+                "$horesRestants h, $minuts m"
+            }
+        }
+    } catch (e: Exception) { }
+    return txtOriginal
 }

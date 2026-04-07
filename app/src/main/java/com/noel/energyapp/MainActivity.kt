@@ -72,9 +72,15 @@ class MainActivity : ComponentActivity() {
                     // Aquest objecte és el "director" de l'App.
                     val navController = rememberNavController()
 
+                    // NOU: Encenem el servei d'alarmes en segon pla INCONDICIONALMENT perquè
+                    // t'arribin les notificacions a tot arreu encara que no hi hagi sessió
+                    val serviceIntent = android.content.Intent(this@MainActivity, com.noel.energyapp.service.SignalRService::class.java)
+                    androidx.core.content.ContextCompat.startForegroundService(this@MainActivity, serviceIntent)
+
                     // 3. Decidim quina és la pantalla inicial (Login, Dashboard o Canvi de Contrasenya)
                     // LÒGICA ANTIBALES: Si té token, comprovem si està bloquejat pel canvi de contrasenya.
                     val startDestination = if (sessionManager.fetchAuthToken() != null) {
+                        
                         if (sessionManager.fetchMustChangePassword()) {
                             Screen.ChangePassword.route // Està bloquejat! A la presó del canvi de contrasenya.
                         } else {
@@ -136,6 +142,11 @@ class MainActivity : ComponentActivity() {
                                 LoginScreen(
                                     paddingValues = padding, // Passem el marge per no tapar el rellotge
                                     onLoginSuccess = { requiresPasswordChange -> // NOU: Rebem el boolean per saber on enviar-lo
+                                        
+                                        // Accionem el servei de notificacions un cop fem login!
+                                        val serviceIntent = android.content.Intent(this@MainActivity, com.noel.energyapp.service.SignalRService::class.java)
+                                        androidx.core.content.ContextCompat.startForegroundService(this@MainActivity, serviceIntent)
+
                                         if (requiresPasswordChange) {
                                             // Va a la pantalla de canvi de contrasenya
                                             navController.navigate(Screen.ChangePassword.route) {
