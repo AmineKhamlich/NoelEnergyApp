@@ -1,5 +1,6 @@
 package com.noel.energyapp.ui.planta
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,7 +43,7 @@ fun PlantaDetailScreen(
     userRoleId: Int // ID NUMÈRIC DEL ROL
 ) {
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("🌍 Consums", "⚠️ Alarmes")

@@ -1,6 +1,7 @@
 package com.noel.energyapp.ui.theme
 
 import android.app.Activity
+import android.graphics.Color as AndroidColor
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -77,8 +78,8 @@ fun NoelEnergyAppTheme(
         SideEffect {
             val window = (view.context as Activity).window
             // Configurem la barra d'estat perquè sigui transparent i deixi veure les icones
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            window.statusBarColor = AndroidColor.TRANSPARENT
+            window.navigationBarColor = AndroidColor.TRANSPARENT
             
             val insetsController = WindowCompat.getInsetsController(window, view)
             

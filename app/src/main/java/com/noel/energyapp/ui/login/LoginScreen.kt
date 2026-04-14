@@ -28,6 +28,7 @@ import com.noel.energyapp.data.LoginRequest
 import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelTextField
+import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
@@ -176,7 +177,7 @@ fun LoginScreen(
                                         val response = RetrofitClient.instance.login(LoginRequest(username, password))
                                         if (response.isSuccessful) {
                                             val loginResponse = response.body()
-                                            val sessionManager = com.noel.energyapp.util.SessionManager(context)
+                                            val sessionManager = SessionManager(context)
                                             loginResponse?.let { res ->
                                                 sessionManager.saveUserData(
                                                     userId = res.id,
