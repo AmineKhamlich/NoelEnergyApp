@@ -36,6 +36,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+// Import per al bucle de comprovació de tancament automàtic
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 // Referències constants string Rutes
 import com.noel.energyapp.navigation.Screen
 // Servei Background per push SignalR C#
@@ -98,15 +101,35 @@ class MainActivity : ComponentActivity() {
                     val serviceIntent = Intent(this@MainActivity, SignalRService::class.java)
                     ContextCompat.startForegroundService(this@MainActivity, serviceIntent)
 
-                    // 3. Decidim quina és la pantalla inicial (Login, Dashboard o Canvi de Contrasenya handling sizes constraint rules checking limitation limitation formatting mapping variables types bounds assignment checking limit methods sizes offset check sizes definitions constraints format constraints types constraints offset offset logic size value limitations strings sizes. 
+                    // 3. Decidim quina és la pantalla inicial (Login, Dashboard o Canvi de Contrasenya)
                     val startDestination = if (sessionManager.fetchAuthToken() != null) {
                         if (sessionManager.fetchMustChangePassword()) {
                             Screen.ChangePassword.route
                         } else {
-                            Screen.Dashboard.route // Passa directament a UI principal bypass form constraints handling value parameters mapping text.
+                            Screen.Dashboard.route
                         }
                     } else {
                         Screen.Login.route
+                    }
+
+                    // --- BUCLE VIGILANT DE TANCAMENT AUTOMÀTIC DE SESSIÓ ---
+                    // S'activa només si l'usuari té sessió oberta (token present).
+                    // Comprova cada 30 segons si l'hora actual coincideix amb alguna hora configurada.
+                    // Si coincideix, esborra la sessió i redirigeix a Login automàticament.
+                    LaunchedEffect(Unit) {
+                        while (isActive) {
+                            // Espera 30 segons abans de tornar a comprovar (per no saturar la CPU)
+                            delay(30_000L)
+                            // Comprova si hi ha sessió activa i si toca fer logout automàtic
+                            if (sessionManager.fetchAuthToken() != null && sessionManager.shouldForceLogout()) {
+                                // Esborra totes les dades de la sessió local
+                                sessionManager.clearUserData()
+                                // Navega a Login i buidem tota la pila de navegació (back stack)
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                        }
                     }
 
                     // 4. Determinem quines pantalles han de mostrar la BottomBar mitjançant recull d'esta check styles constraints formats logic sizes definition texts formatting layout check method constraint size check.

@@ -381,6 +381,11 @@ fun GestioUsuarisScreen(
         var nouCognom by remember { mutableStateOf("") }
         var nouRol by remember { mutableStateOf("TÈCNIC") } // Predisposició baixa com a defecte sense riscos per errada humana
 
+        // Comprovació en temps real: compara el nick entrat (en minúscules) amb els nicks existents carregats ja en memòria.
+        // No requereix cap crida extra a l'API, aprofita la llista 'usuaris' ja descarregada.
+        val nickJaExisteix = nouNick.isNotBlank() &&
+            usuaris.any { it.nomUsuari.equals(nouNick.trim(), ignoreCase = true) }
+
         AlertDialog(
             onDismissRequest = { showCreateUserDialog = false },
             title = { Text("Crear Nou Usuari") },
@@ -397,7 +402,16 @@ fun GestioUsuarisScreen(
                         value = nouNick,
                         onValueChange = { nouNick = it },
                         label = { Text("Nom d'usuari (@nick)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        // Marca el camp de vermell si el nick ja existeix a la llista d'usuaris
+                        isError = nickJaExisteix,
+                        // Missatge d'error inline sota el camp, visible només quan hi ha conflicte
+                        supportingText = if (nickJaExisteix) {{
+                            Text(
+                                text = "Aquest nick ja està en ús. Escull-ne un altre.",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }} else null
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -429,7 +443,10 @@ fun GestioUsuarisScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = {
+                Button(
+                    // El botó queda deshabilitat si el nick ja existeix o els camps obligatoris estan buits
+                    enabled = !nickJaExisteix && nouNick.isNotBlank() && nouNomReal.isNotBlank(),
+                    onClick = {
                     if (nouNick.isBlank() || nouNomReal.isBlank()) {
                         Toast.makeText(
                             context,

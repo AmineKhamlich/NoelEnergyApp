@@ -24,6 +24,9 @@ import android.content.Context
 import android.content.SharedPreferences
 // Importació de l'extensió 'edit' de la biblioteca de compatibilitat per a SharedPreferences
 import androidx.core.content.edit
+// Importació per obtenir l'hora actual del dispositiu
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 // Classe que encapsula tota la lògica de persistència de la sessió de l'usuari
 // Rep un 'context' de l'activitat o servei que l'instancia
@@ -50,6 +53,9 @@ class SessionManager(context: Context) {
         const val THEME_PREFERENCE = "theme_preference"  // Tema visual: "LIGHT", "DARK" o "AUTO"
         const val ANIMATIONS_ENABLED = "animations_enabled" // Animacions actives: true o false
         const val DEFAULT_PLANT_ID = "default_plant_id"  // ID de la planta per defecte del Dashboard
+
+        // Clau per guardar les hores de tancament forçat de sessió (ex: "22:00,06:00")
+        const val FORCED_LOGOUT_TIMES = "forced_logout_times"
     }
 
     /**
@@ -158,7 +164,52 @@ class SessionManager(context: Context) {
      */
     fun clearUserData() {
         prefs.edit {
+            // Conservem les preferències d'interfície i les hores de logout (no les esborrem al logout)
+            val theme = prefs.getString(THEME_PREFERENCE, "AUTO")
+            val animations = prefs.getBoolean(ANIMATIONS_ENABLED, true)
+            val logoutTimes = prefs.getString(FORCED_LOGOUT_TIMES, "")
             clear() // Elimina TOTES les claus i valors del fitxer de preferències
+            // Restaurem les preferències que volem conservar entre sessions
+            putString(THEME_PREFERENCE, theme)
+            putBoolean(ANIMATIONS_ENABLED, animations)
+            putString(FORCED_LOGOUT_TIMES, logoutTimes)
         }
+    }
+
+    // --- Hores de tancament forçat de sessió ---
+
+    /**
+     * Guarda la llista d'hores de tancament forçat.
+     * Les hores es guarden com a text separat per comes (ex: "22:00,06:00").
+     */
+    fun saveForcedLogoutTimes(times: Set<String>) {
+        // Uneix la llista d'hores amb comes i la guarda com a string únic
+        prefs.edit { putString(FORCED_LOGOUT_TIMES, times.joinToString(",")) }
+    }
+
+    /**
+     * Recupera la llista d'hores de tancament forçat com a conjunt de Strings (ex: {"22:00", "06:00"}).
+     * Retorna un conjunt buit si no n'hi ha cap configurada.
+     */
+    fun fetchForcedLogoutTimes(): Set<String> {
+        val raw = prefs.getString(FORCED_LOGOUT_TIMES, "") ?: ""
+        // Si el text és buit no hi ha hores configurades
+        if (raw.isBlank()) return emptySet()
+        // Separa per comes, neteja espais i retorna com a Set per evitar duplicats
+        return raw.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet()
+    }
+
+    /**
+     * Comprova si l'hora actual coincideix amb alguna de les hores de logout forçat configurades.
+     * La comparació es fa per minut exacte (HH:mm).
+     * Retorna 'true' si s'ha de forçar el tancament de sessió ara mateix.
+     */
+    fun shouldForceLogout(): Boolean {
+        val times = fetchForcedLogoutTimes()
+        if (times.isEmpty()) return false // Si no hi ha hores configurades, mai es forçarà
+        // Obté l'hora actual del dispositiu en format "HH:mm"
+        val currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+        // Comprova si l'hora actual (arrodonida al minut) coincideix amb alguna hora configurada
+        return times.contains(currentTime)
     }
 }
