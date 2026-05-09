@@ -66,6 +66,12 @@ data class UpdateUsuariDto(
     val idsPlantes: List<Int>? = null        // Nova llista de plantes assignades (null si no es vol canviar)
 )
 
+// Model limitat per assignar plantes sense exposar canvis de rol o estat al supervisor
+data class UpdateUsuariPlantesDto(
+    val idUsuari: Int,
+    val idsPlantes: List<Int>
+)
+
 // Model de resposta genèric de l'API per a les operacions que no retornen dades concretes
 // S'utilitza per confirmar que l'operació ha anat bé i mostrar el missatge al usuari
 data class GenericResponse(

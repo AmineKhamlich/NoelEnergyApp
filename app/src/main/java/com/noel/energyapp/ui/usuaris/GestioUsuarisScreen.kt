@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.noel.energyapp.data.CrearUsuariDto
 import com.noel.energyapp.data.PlantaDto
 import com.noel.energyapp.data.UpdateUsuariDto
+import com.noel.energyapp.data.UpdateUsuariPlantesDto
 import com.noel.energyapp.data.UsuariResumDto
 import com.noel.energyapp.network.RetrofitClient
 // Components gràfics propis
@@ -78,6 +79,8 @@ fun GestioUsuarisScreen(
     // SessionManager per tractar la clau i accés des de l'emmagatzematge xifrat
     val sessionManager = remember { SessionManager(context) }
     val token = sessionManager.fetchAuthToken() ?: ""
+    val currentUserRole = sessionManager.fetchUserRole()?.uppercase()
+    val isCurrentUserAdmin = currentUserRole == "ADMIN"
 
     // --- 2. ESTATS DE LES DADES ---
     var usuaris by remember { mutableStateOf<List<UsuariResumDto>>(emptyList()) }
@@ -153,16 +156,18 @@ fun GestioUsuarisScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // Espai d'oxigenació entre camp i botonera propera
-            Spacer(modifier = Modifier.width(8.dp))
+            if (isCurrentUserAdmin) {
+                // Espai d'oxigenació entre camp i botonera propera
+                Spacer(modifier = Modifier.width(8.dp))
 
-            // Botó verdos per crear un nou usuari a DB
-            FloatingActionButton(
-                onClick = { showCreateUserDialog = true }, // Set true per llançar Popup inferior
-                containerColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Nou Usuari", tint = Color.White)
+                // Només l'administrador pot crear nous usuaris.
+                FloatingActionButton(
+                    onClick = { showCreateUserDialog = true }, // Set true per llançar Popup inferior
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Nou Usuari", tint = Color.White)
+                }
             }
         }
 
@@ -224,7 +229,7 @@ fun GestioUsuarisScreen(
                                     val isActiu = usuari.actiu == true
 
                                     // Decidim si el Switch d'activació ha de permetre ús:
-                                    // Si l'usuari de la llista és ADMIN global, no permetem jugar al tancament per autoprotecció al fronted
+                                    // Si l'usuari de la llista és ADMIN global, no permetem jugar al tancament per autoprotecció al frontend.
                                     val esAdmin = usuari.rol.equals("ADMIN", ignoreCase = true)
 
                                     Text(
@@ -241,7 +246,7 @@ fun GestioUsuarisScreen(
                                     // Cèl·lula que dicta canvi boolean
                                     Switch(
                                         checked = isActiu,
-                                        enabled = !esAdmin, // Si ets l'admin en el llistat no permet el desactiva't tu sol
+                                        enabled = isCurrentUserAdmin && !esAdmin, // El supervisor no pot activar/desactivar usuaris
                                         onCheckedChange = { isChecked ->
                                             scope.launch {
                                                 // Optimisme visual primer: modifico aspecte per UX àgil 
@@ -289,23 +294,46 @@ fun GestioUsuarisScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // 1. Botó "Tipus Canvi de rol" - en visualitzacions de container
-                                Button(
-                                    onClick = { usuariSeleccionat_per_rol = usuari }, // Provocarà el desplegment del alert per Roles
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                ) {
-                                    Text(
-                                        text = usuari.rol, // Posa el propi rol ja dintre botu com titol d'ajut visual global (p.e: "ADMIN")
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
+                                if (isCurrentUserAdmin) {
+                                    // 1. Botó "Tipus Canvi de rol" - només ADMIN
+                                    Button(
+                                        onClick = { usuariSeleccionat_per_rol = usuari }, // Provocarà el desplegment del alert per Roles
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    ) {
+                                        Text(
+                                            text = usuari.rol, // Posa el propi rol ja dintre botu com titol d'ajut visual global (p.e: "ADMIN")
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
+                                } else {
+                                    // El supervisor pot veure el rol, però no modificar-lo.
+                                    Surface(
+                                        modifier = Modifier.weight(1f),
+                                        shape = MaterialTheme.shapes.medium,
+                                        color = MaterialTheme.colorScheme.secondaryContainer
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 10.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = usuari.rol,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        }
+                                    }
                                 }
 
                                 // 2. Botó per assignar permisos de plantes específiques
                                 Button(
+                                    enabled = isCurrentUserAdmin || !usuari.rol.equals("ADMIN", ignoreCase = true),
                                     onClick = { usuariSeleccionat_per_plantes = usuari },
                                     modifier = Modifier.weight(1f)
                                 ) {
@@ -316,7 +344,10 @@ fun GestioUsuarisScreen(
                                 }
 
                                 // 3. Botó de seguretat iconogràfic, vermell per reset de contrasenya universal al 123456 en descuit usuari
-                                IconButton(onClick = { usuariAResetejar = usuari }) { // Llança dialeg d'afirmacio
+                                IconButton(
+                                    enabled = isCurrentUserAdmin || !usuari.rol.equals("ADMIN", ignoreCase = true),
+                                    onClick = { usuariAResetejar = usuari }
+                                ) { // Llança dialeg d'afirmacio
                                     Icon(
                                         Icons.Default.LockReset,
                                         contentDescription = "Reset Password",
@@ -347,7 +378,7 @@ fun GestioUsuarisScreen(
                             try {
                                 // Request mapeja un diccionari amb key nom de var C# api params
                                 val response =
-                                    RetrofitClient.instance.resetPassword(mapOf("username" to usernameTarget))
+                                    RetrofitClient.instance.resetPassword("Bearer $token", mapOf("username" to usernameTarget))
                                 if (response.isSuccessful) {
                                     Toast.makeText(
                                         context,
@@ -374,7 +405,7 @@ fun GestioUsuarisScreen(
     }
 
     // 6.2 DIÀLEG: CREAR NOU USUARI
-    if (showCreateUserDialog) {
+    if (showCreateUserDialog && isCurrentUserAdmin) {
         // Estat referent als valors interiors que l'usuari de teclat digita quan demana fer persona nova.
         var nouNick by remember { mutableStateOf("") }
         var nouNomReal by remember { mutableStateOf("") }
@@ -489,7 +520,7 @@ fun GestioUsuarisScreen(
     }
 
     /// 6.3 DIÀLEG: CANVI DE ROL D'UN EXSISTENT 
-    if (usuariSeleccionat_per_rol != null) {
+    if (usuariSeleccionat_per_rol != null && isCurrentUserAdmin) {
         val usuari = usuariSeleccionat_per_rol!!
         // 1. Traduïm pel valor original d'App per l'etiqueta mostrada: "TECNIC" referent format visual ("TÈCNIC") 
         val rolActualVisual = rolDBToVisual(usuari.rol)
@@ -610,14 +641,11 @@ fun GestioUsuarisScreen(
                     scope.launch {
                         try {
                             // Update amb només IDs Plantes en llista.
-                            val request = UpdateUsuariDto(
+                            val request = UpdateUsuariPlantesDto(
                                 user.id,
-                                null,
-                                null,
-                                null,
                                 plantesSeleccionades.toList()
                             )
-                            RetrofitClient.instance.actualitzarUsuari("Bearer $token", request)
+                            RetrofitClient.instance.actualitzarPlantesUsuari("Bearer $token", request)
                             recarregarDades()
                         } finally {
                             usuariSeleccionat_per_plantes = null

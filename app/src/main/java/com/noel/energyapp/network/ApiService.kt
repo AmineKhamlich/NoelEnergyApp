@@ -26,6 +26,7 @@ import com.noel.energyapp.data.PlantaDto
 import com.noel.energyapp.data.TancarIncidenciaDto
 import com.noel.energyapp.data.UpdatePlantesActivesDto
 import com.noel.energyapp.data.UpdateUsuariDto
+import com.noel.energyapp.data.UpdateUsuariPlantesDto
 import com.noel.energyapp.data.UsuariResumDto
 // Importació de les classes de OkHttp3 per construir peticions multipart (enviament de fotos)
 import okhttp3.MultipartBody
@@ -57,10 +58,12 @@ interface ApiService {
     // 'suspend' indica que la crida és asíncrona i no bloquejarà el fil principal de la UI
     suspend fun login(@Body request: LoginRequest): Response<UsuariResumDto>
 
-    // Restableix la contrasenya d'un usuari concret (posar-la a 123456)
-    // No requereix autenticació perquè és una operació d'administrador via Swagger
+    // Restableix la contrasenya d'un usuari concret (ADMIN o SUPERVISOR)
     @POST("Usuari/reset-password")
-    suspend fun resetPassword(@Body body: Map<String, String>): Response<Void>
+    suspend fun resetPassword(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): Response<Void>
 
     // Canvia la contrasenya d'un usuari autenticat (login, userId, old i new password)
     // Requereix el token JWT a la capçalera Authorization per verificar la identitat
@@ -86,6 +89,13 @@ interface ApiService {
     suspend fun actualitzarUsuari(
         @Header("Authorization") token: String,  // Es necessita ser ADMIN
         @Body request: UpdateUsuariDto           // Camps a actualitzar (tots opcionals excepte l'ID)
+    ): Response<GenericResponse>
+
+    // Actualitza només les plantes assignades d'un usuari (ADMIN o SUPERVISOR)
+    @PUT("Usuari/actualitzar-plantes")
+    suspend fun actualitzarPlantesUsuari(
+        @Header("Authorization") token: String,
+        @Body request: UpdateUsuariPlantesDto
     ): Response<GenericResponse>
 
     // ==========================================================================

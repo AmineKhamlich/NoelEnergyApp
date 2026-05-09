@@ -202,7 +202,7 @@ fun FloatingBottomBar(
                 // Només retorna els items que passen la condicio logic user Role limits mappings types sizes formatting boolean formats object string parameter properties type variables formats modifier definitions layout rules.
                 val visibleItems = allItems.filter { item ->
                     when (item.second) {
-                        Screen.GestioUsuaris.route -> userRole == "ADMIN"
+                        Screen.GestioUsuaris.route -> userRole == "ADMIN" || userRole == "SUPERVISOR"
                         Screen.GestioPlantes.route -> userRole == "ADMIN"
                         else -> true
                     }

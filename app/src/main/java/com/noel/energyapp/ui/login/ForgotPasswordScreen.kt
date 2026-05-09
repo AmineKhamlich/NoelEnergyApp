@@ -98,8 +98,17 @@ fun ForgotPasswordScreen(
                     scope.launch {
                         isLoading = true
                         try {
+                            val token = sessionManager.fetchAuthToken()
+                            if (token.isNullOrBlank()) {
+                                Toast.makeText(
+                                    context,
+                                    "El restabliment l'ha de fer un administrador o supervisor.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                return@launch
+                            }
                             // Utilitza diccionari json ràpid llançat post object
-                            val response = RetrofitClient.instance.resetPassword(mapOf("username" to username))
+                            val response = RetrofitClient.instance.resetPassword("Bearer $token", mapOf("username" to username))
                             if (response.isSuccessful) {
                                 // Cas reeixit. El backend ha canviat la contraseña a "123456" de manera autònoma i envia true a l'status bool flag DB table property column bit mapping. 
                                 Toast.makeText(context, "Contrasenya restablerta correctament", Toast.LENGTH_LONG).show()
