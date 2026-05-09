@@ -19,7 +19,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -111,9 +111,13 @@ fun AlarmesActivesScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp) // Espai de 12dp entre cada targeta
             ) {
                 // Per cada alarma de la llista, renderitza una targeta 'AlarmaCard'
-                items(alarmes) { alarma ->
+                itemsIndexed(alarmes) { index, alarma ->
                     // El botó de gestionar de la targeta navega cap a la pantalla de tancament
-                    AlarmaCard(alarma = alarma, onGestionarClick = { onNavigateToTancarAlarma(alarma.id) })
+                    AlarmaCard(
+                        alarma = alarma,
+                        animationDelayMillis = (index * 70).coerceAtMost(350),
+                        onGestionarClick = { onNavigateToTancarAlarma(alarma.id) }
+                    )
                 }
             }
         }

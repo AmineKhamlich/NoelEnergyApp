@@ -50,6 +50,7 @@ import com.noel.energyapp.ui.alarmes.AlarmesHistoricScreen
 import com.noel.energyapp.ui.alarmes.HistoricAlarmaDetailScreen
 import com.noel.energyapp.ui.alarmes.TancarIncidenciaScreen
 import com.noel.energyapp.ui.components.FloatingBottomBar
+import com.noel.energyapp.ui.components.LocalNoelAnimationsEnabled
 import com.noel.energyapp.ui.consums.ConsumGraficaScreen
 import com.noel.energyapp.ui.consums.ConsumRegistresScreen
 import com.noel.energyapp.ui.consums.ConsumsActualsScreen
@@ -90,10 +91,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Un estat simple limit variables boolean logic properties handler constraint formats text checks methods style limitations value type string limit definitions checking boolean assignment property definition forçant recomposar the method.
             var themeRecomposeKey by remember { mutableStateOf(0) }
+            var animationsEnabled by remember { mutableStateOf(sessionManager.fetchAnimationsEnabled()) }
 
             // Bloc que fa referesc dinàmic per canviar the definition properties parameters check assignment properties limits offset mapping text value string limitation object size style assignment limits properties offset types limitation mappings boolean check definition type methods limitation limitation.
             key(themeRecomposeKey) {
                 NoelEnergyAppTheme {
+                    CompositionLocalProvider(LocalNoelAnimationsEnabled provides animationsEnabled) {
                     // 2. Creem el NavController: és l'objecte que executa les ordres de navegar logic types text formats rules values constraint values limitation boolean formats definitions strings limitation sizing property text handler parameters offset mapping parameter checking type value rule string parameters rules text checking offset limitation definitions text text definition check style limit handling limits property method style formatting handling formatting values properties text definition checking.
                     val navController = rememberNavController()
 
@@ -393,6 +396,9 @@ class MainActivity : ComponentActivity() {
                                     onBackClick = { navController.popBackStack() },
                                     // Retorna the update rules parameters logic definitions limit offset offsets type types checking value texts properties constraints checking layout limit check.
                                     onThemeChanged = { themeRecomposeKey++ },
+                                    onAnimationsChanged = {
+                                        animationsEnabled = sessionManager.fetchAnimationsEnabled()
+                                    },
                                     onLogoutClick = {
                                         // Buidatge caché.
                                         sessionManager.clearUserData()
@@ -403,6 +409,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                    }
                     }
                 }
             }

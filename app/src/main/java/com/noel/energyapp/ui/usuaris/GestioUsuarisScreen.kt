@@ -20,7 +20,7 @@ package com.noel.energyapp.ui.usuaris
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -47,6 +47,7 @@ import com.noel.energyapp.data.UsuariResumDto
 import com.noel.energyapp.network.RetrofitClient
 // Components gràfics propis
 import com.noel.energyapp.ui.components.NoelScreen
+import com.noel.energyapp.ui.components.noelReveal
 import com.noel.energyapp.ui.theme.StatusGreenLight
 import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
@@ -188,10 +189,11 @@ fun GestioUsuarisScreen(
                 .fillMaxWidth()
                 .weight(1f)) {
                 // Passant el array filtrador intel·ligent on rederigua cada element per "usuari" variable
-                items(usuarisFiltrats) { usuari ->
+                itemsIndexed(usuarisFiltrats) { index, usuari ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .noelReveal(delayMillis = (index * 45).coerceAtMost(300))
                             .padding(vertical = 6.dp),
                         shape = MaterialTheme.shapes.medium,
                         // Utilització d'elevació per destacar cada caixa de cadascun empleat

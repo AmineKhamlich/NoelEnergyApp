@@ -11,6 +11,12 @@
  */
 package com.noel.energyapp.ui.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -20,7 +26,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -33,15 +42,30 @@ fun NoelButton(
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.primary // Color per defecte temàtic
 ) {
+    val animationsEnabled = LocalNoelAnimationsEnabled.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (animationsEnabled && isPressed && enabled && !isLoading) 0.98f else 1f,
+        animationSpec = if (animationsEnabled) {
+            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+        } else {
+            snap()
+        },
+        label = "NoelButtonScale"
+    )
+
     // Dibuixa el composable nadiu de Material 3 
     Button(
         onClick = onClick,
         // Apliquem l'estil Noel: Ample total, altura de 50dp i cantons medium
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(50.dp)
+            .scale(scale),
         // Queda suspès funcionalment si enabled is false o s'està en curs de loading
         enabled = enabled && !isLoading,
+        interactionSource = interactionSource,
         shape = MaterialTheme.shapes.medium, // Base shapes configurat
         colors = ButtonDefaults.buttonColors(containerColor = containerColor)
     ) {

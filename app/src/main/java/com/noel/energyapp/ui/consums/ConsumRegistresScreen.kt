@@ -48,6 +48,7 @@ import com.noel.energyapp.data.FactCntHistorianDto
 import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
+import com.noel.energyapp.ui.components.noelReveal
 import com.noel.energyapp.ui.theme.*
 import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
@@ -230,7 +231,10 @@ fun ConsumRegistresScreen(
             // --- TARGETA DE FILTRE (Comptador + Data + Botó) ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .noelReveal()
+                    .clip(RoundedCornerShape(16.dp))
             ) {
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
@@ -299,7 +303,9 @@ fun ConsumRegistresScreen(
 
                 // Targeta que conté totes les files de registres horaris
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .noelReveal(delayMillis = 80),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
@@ -308,6 +314,7 @@ fun ConsumRegistresScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .noelReveal(delayMillis = (index * 15).coerceAtMost(250), offsetY = 8.dp, durationMillis = 220)
                                     .clickable {
                                         registreAEditar = reg // Estableix el registre a editar
                                         // Pre-omple el camp d'edició amb el valor corregit si existeix, o buit

@@ -12,6 +12,7 @@
  */
 package com.noel.energyapp.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -82,22 +83,29 @@ fun NoelPremiumButton(
     subtitle: String,                            // Sub explicació de funció 
     icon: ImageVector,                           // Vector base dreta layout limits sizes modifier mapping property string 
     gradient: Brush = Brush.horizontalGradient(listOf(PremiumBlueStart, PremiumBlueEnd)), // Opcional Gradient canvi offset type object constraints handling boolean values limitations formatting values limit checking.
+    revealDelayMillis: Int = 0,
     onClick: () -> Unit                          // Event mapping variables definition method check string style handlers structure handlers constraints definitions values mappings text checking limits parameters check text handling check values string rules offset rules rules definition limits logic check constraint methods.
 ) {
+    val animationsEnabled = LocalNoelAnimationsEnabled.current
     // Es pre-enregistra un "Interaction Source" per traçar quan s'està teclejant the button screen parameters format mapping boolean definition parameters constraints bounds parameters handling formats rules handling methods.
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
     // Animacion d'Escala en un spring bouncer "boti".
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.96f else 1f, // Es fa petit -4% pres boolean limitation type limits limits property style texts mapping definitions sizes parameters limitations.
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        targetValue = if (animationsEnabled && isPressed) 0.96f else 1f, // Es fa petit -4% pres boolean limitation type limits limits property style texts mapping definitions sizes parameters limitations.
+        animationSpec = if (animationsEnabled) {
+            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+        } else {
+            snap()
+        },
         label = "scale"
     )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .noelReveal(delayMillis = revealDelayMillis)
             .height(100.dp) // Major grandesa que el NoelButton clàssic handler offset variables formats types strings.
             .scale(scale)   // Apliquem factor esmenat de l'arquitectura d'animació superior format limit methods value property limits size handler.
             .clip(RoundedCornerShape(28.dp)) // Recortat limits boundaries handling rules text parameters.
@@ -279,6 +287,27 @@ private fun NavItem(
     inactiveColor: Color,
     onClick: () -> Unit
 ) {
+    val animationsEnabled = LocalNoelAnimationsEnabled.current
+    val iconColor by animateColorAsState(
+        targetValue = if (isSelected) activeColor else inactiveColor,
+        animationSpec = if (animationsEnabled) tween(180) else snap(),
+        label = "NavItemColor"
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (animationsEnabled && isSelected) 1.08f else 1f,
+        animationSpec = if (animationsEnabled) {
+            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+        } else {
+            snap()
+        },
+        label = "NavItemScale"
+    )
+    val indicatorWidth by animateDpAsState(
+        targetValue = if (isSelected) 16.dp else 0.dp,
+        animationSpec = if (animationsEnabled) tween(180) else snap(),
+        label = "NavItemIndicator"
+    )
+
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
@@ -289,15 +318,17 @@ private fun NavItem(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (isSelected) activeColor else inactiveColor, // Aplica Color d'Activació format boundary size definitions boundaries formats limitation definitions limitation offset styles formats limitation layout limitation styles handling parameter string properties check sizing layout check types text limits constraints limitation limitations.
-            modifier = Modifier.size(26.dp)
+            tint = iconColor, // Aplica Color d'Activació format boundary size definitions boundaries formats limitation definitions limitation offset styles formats limitation layout limitation styles handling parameter string properties check sizing layout check types text limits constraints limitation limitations.
+            modifier = Modifier
+                .size(26.dp)
+                .scale(iconScale)
         )
         // Sub linia indicativa del target Activat logic limits checking string size check text variables method size mapping parameters variable bounds types mapping type styles value offset limits layouts format checking formatting checks bounds types string styles bounding value logic limitations styles constraint property definitions constraints assignment methods check properties value limitation limitations parameters types limitation bounds limitation methods types limit styles constraints sizing size boolean properties constraint styles check variable.
         if (isSelected) {
             Box(
                 modifier = Modifier
                     .padding(top = 4.dp)
-                    .size(width = 10.dp, height = 3.dp) // Ralleta type definition formatting text styles format definitions boundaries value.
+                    .size(width = indicatorWidth, height = 3.dp) // Ralleta type definition formatting text styles format definitions boundaries value.
                     .clip(RoundedCornerShape(2.dp))
                     .background(activeColor)
             )

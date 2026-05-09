@@ -133,6 +133,7 @@ fun PlantaDetailScreen(
                     subtitle = "Dades en temps real de SCADA", // Context d'ajut al button
                     icon = Icons.Default.WaterDrop,
                     gradient = Brush.linearGradient(listOf(PremiumBlueStart, PremiumBlueEnd)),
+                    revealDelayMillis = 0,
                     onClick = onNavigateToConsumsActuals
                 )
 
@@ -141,6 +142,7 @@ fun PlantaDetailScreen(
                     subtitle = "Gràfiques històriques i m³", // Context
                     icon = Icons.Default.DateRange, // Icona calendarial
                     gradient = Brush.linearGradient(listOf(PremiumTealStart, PremiumTealEnd)), // Verd Aigua Gradient per trencar estètica totalment blava
+                    revealDelayMillis = 80,
                     onClick = onNavigateToConsumGrafica
                 )
 
@@ -153,6 +155,7 @@ fun PlantaDetailScreen(
                         icon = Icons.Default.List,
                         // Utilitza tons taronges d'administrador/perills per l'alteració de bases
                         gradient = Brush.linearGradient(listOf(PremiumOrangeStart, PremiumOrangeEnd)),
+                        revealDelayMillis = 160,
                         onClick = onNavigateToConsumRegistres // Aixeca el screen amb listat d'edició
                     )
                 }
@@ -163,6 +166,7 @@ fun PlantaDetailScreen(
                     subtitle = "Incidències crítiques pendents",
                     icon = Icons.Default.Warning,
                     gradient = Brush.linearGradient(listOf(AlarmCriticaRed, Color(0xFF660000))), // Rojo profund per ressaltar alertes no ateses
+                    revealDelayMillis = 0,
                     onClick = onNavigateToAlarmesActives
                 )
 
@@ -171,6 +175,7 @@ fun PlantaDetailScreen(
                     subtitle = "Històric d'incidències tancades",
                     icon = Icons.Default.Notifications,
                     gradient = Brush.linearGradient(listOf(PremiumPurpleStart, PremiumPurpleEnd)), // Ton purpura per contrast i distensió amb Alarm rosses
+                    revealDelayMillis = 80,
                     onClick = onNavigateToAlarmesHistoric
                 )
             }

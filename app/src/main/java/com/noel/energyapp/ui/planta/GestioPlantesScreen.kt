@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +51,7 @@ import com.noel.energyapp.network.RetrofitClient
 // Elements visuals d'abstracció d'estils uniformes de l'appName
 import com.noel.energyapp.ui.components.NoelButton
 import com.noel.energyapp.ui.components.NoelScreen
+import com.noel.energyapp.ui.components.noelReveal
 import com.noel.energyapp.util.SessionManager
 import kotlinx.coroutines.launch
 
@@ -141,11 +142,12 @@ fun GestioPlantesScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                items(plantes) { planta ->
+                itemsIndexed(plantes) { index, planta ->
                     // Carta independent per a cada item de llistat
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .noelReveal(delayMillis = (index * 50).coerceAtMost(300))
                             .padding(vertical = 4.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {

@@ -63,7 +63,9 @@ fun NoelScreen(
             
             // --- CONTINGUT (Full Screen Integrat sense efecte Screen-in-Screen que faria de caixa tancada sense espais bounds offset object properties layout offset parameters boundaries) ---
             Surface(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .noelReveal(offsetY = 10.dp, durationMillis = 240),
                 shape = RoundedCornerShape(0.dp), // Rectangle pla complet base layout background base definitions object style offset rule values modifiers structure definitions modifier assignment modifier parameters.
                 color = Color.Transparent, // Faci reflectir el seu box pare darrera .
                 contentColor = if (isDark) Color.White else LightOnSurface,

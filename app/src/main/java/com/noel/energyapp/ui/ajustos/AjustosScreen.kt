@@ -51,6 +51,7 @@ fun AjustosScreen(
     paddingValues: PaddingValues, // Marges segurs dalt i baix (System Insets)
     onBackClick: () -> Unit,      // Callback de fletxa endarrere (si apliqués)
     onThemeChanged: () -> Unit,   // Callback per reconstruir la UI després de canviar el tema
+    onAnimationsChanged: () -> Unit = {}, // Callback per aplicar la preferència visual sense reiniciar fluxos
     onLogoutClick: () -> Unit     // Callback per dir-li al NavHost que vagi a la pantalla de Login
 ) {
     // Context per a accedir al 'SharedPreferences' usant SessionManager
@@ -182,6 +183,7 @@ fun AjustosScreen(
                     onCheckedChange = {
                         animationsEnabled = it // Assignar localment al valor state
                         sessionManager.saveAnimationsEnabled(it) // Commit en el gestor Local
+                        onAnimationsChanged()
                     }
                 )
             }

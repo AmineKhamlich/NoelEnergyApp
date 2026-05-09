@@ -51,6 +51,7 @@ import com.noel.energyapp.network.RetrofitClient
 import com.noel.energyapp.ui.components.GlassCard
 import com.noel.energyapp.ui.components.NoelPremiumButton
 import com.noel.energyapp.ui.components.NoelScreen
+import com.noel.energyapp.ui.components.noelReveal
 import com.noel.energyapp.ui.theme.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
@@ -160,10 +161,11 @@ fun DashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp) // Espai de 16dp entre cada targeta de planta
             ) {
                 // Per cada planta de la llista filtrada, renderitza una targeta premium
-                plantes.forEach { planta ->
+                plantes.forEachIndexed { index, planta ->
                     PremiumPlantaCard(
                         planta = planta,
                         alarmes = alarmes, // Passa totes les alarmes per calcular l'estat de la planta
+                        animationDelayMillis = (index * 70).coerceAtMost(350),
                         onClick = { onPlantaClick(planta.id_planta, planta.nom_planta) } // Navega al detall
                     )
                 }
@@ -180,6 +182,7 @@ fun DashboardScreen(
 private fun PremiumPlantaCard(
     planta: PlantaDto,                   // Dades de la planta a mostrar
     alarmes: List<IncidenciaVistaDto>,   // Totes les alarmes actives per calcular les de la planta concreta
+    animationDelayMillis: Int = 0,
     onClick: () -> Unit                  // Callback que s'executa en tocar la targeta
 ) {
     // Determina si el tema actiu és fosc per adaptar els colors de la targeta
@@ -214,7 +217,9 @@ private fun PremiumPlantaCard(
     // Surface clicable que serveix de base de la targeta amb contorn i elevació adaptats
     Surface(
         onClick = onClick,                            // Navega al detall de la planta en tocar
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .noelReveal(delayMillis = animationDelayMillis),
         shape = RoundedCornerShape(28.dp),            // Cantonades molt arrodonides per a disseny premium
         color = cardBgColor,                          // Color de fons adaptat al tema
         border = BorderStroke(1.dp, cardBorderColor), // Contorn d'1dp adaptat al tema

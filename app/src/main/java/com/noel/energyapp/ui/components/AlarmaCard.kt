@@ -33,8 +33,10 @@ import java.util.Locale
 @Composable
 fun AlarmaCard(
     alarma: IncidenciaVistaDto,       // Objecte d'energia en local structure class memory
-    onGestionarClick: () -> Unit      // Eventual pols al botó final de la vista structure parameter limits boolean rule parameters
+    onGestionarClick: () -> Unit,     // Eventual pols al botó final de la vista structure parameter limits boolean rule parameters
+    animationDelayMillis: Int = 0
 ) {
+    val animationsEnabled = LocalNoelAnimationsEnabled.current
     // 1. COLORS DINÀMICS HOMOGÈNIS A L'HISTÒRIC I APP BASE
     val isDark = isSystemInDarkTheme()
     val cardColor = if (isDark) Color.White.copy(alpha = 0.05f) else SurfaceLight
@@ -43,16 +45,21 @@ fun AlarmaCard(
 
     // 2. MOTOR ANIMACIÓ PER LES CRÍTIQUES
     // Utilitzem Transicions infinites que aniran d'un value roig inicial a fosc tipus sirena the animation framework logic handler method class modifier param value color modifier variables check properties string limit boolean type offset definition logic rule text limits constraint rules limits definitions value type values limit handling properties sizes strings check checking parameter.
-    val infiniteTransition = rememberInfiniteTransition(label = "Blinking")
-    val animatedCriticalColor by infiniteTransition.animateColor(
-        initialValue = AlarmCriticaRed,
-        targetValue = AlarmCriticaDark,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = LinearEasing), // 800 millis the transition gap offset values type properties
-            repeatMode = RepeatMode.Reverse // Torna cap al color principal darrera i volta limit values assignment rule style properties handler values variables parameter property text properties sizes format
-        ),
-        label = "CriticalColorAnimation" // debug key label object parameter property rules sizes format property text check definitions layout rule style checking string type methods value check variables offset definition methods string handling modifier boolean handling
-    )
+    val animatedCriticalColor = if (animationsEnabled) {
+        val infiniteTransition = rememberInfiniteTransition(label = "Blinking")
+        val color by infiniteTransition.animateColor(
+            initialValue = AlarmCriticaRed,
+            targetValue = AlarmCriticaDark,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing), // 800 millis the transition gap offset values type properties
+                repeatMode = RepeatMode.Reverse // Torna cap al color principal darrera i volta limit values assignment rule style properties handler values variables parameter property text properties sizes format
+            ),
+            label = "CriticalColorAnimation" // debug key label object parameter property rules sizes format property text check definitions layout rule style checking string type methods value check variables offset definition methods string handling modifier boolean handling
+        )
+        color
+    } else {
+        AlarmCriticaRed
+    }
 
     // Es formatitza string general "ALERTA CRÍTICA" a standard comparatiu "ALERTA CRITICA" sense accents offset string type variables text parameters assignment modifier mapping comparison rule
     val gravetatNeta = alarma.gravetat.uppercase(Locale.ROOT)
@@ -69,7 +76,9 @@ fun AlarmaCard(
     val tempsFormatat = formatTempsTranscorregut(alarma.tempsTranscorregut)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .noelReveal(delayMillis = animationDelayMillis),
         colors = CardDefaults.cardColors(containerColor = cardColor, contentColor = contentColor),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 3.dp),
         border = BorderStroke(1.dp, borderColor),

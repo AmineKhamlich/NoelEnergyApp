@@ -12,11 +12,20 @@
  */
 package com.noel.energyapp.ui.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -32,11 +41,27 @@ fun NoelDashboardButton(
     modifier: Modifier = Modifier,  // Modifier pass the structure definitions constraints type parameters object sizes layout properties values modifier variables limits modifier mapping definitions assignment bounds assignment parameters limit variable variable assignments text variables boolean.
     badge: String? = null           // Param opcional string "3" per a cercle de notificacions (counter visual limit numbers) limits.
 ) {
+    val animationsEnabled = LocalNoelAnimationsEnabled.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (animationsEnabled && isPressed) 0.97f else 1f,
+        animationSpec = if (animationsEnabled) {
+            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+        } else {
+            snap()
+        },
+        label = "NoelDashboardButtonScale"
+    )
+
     // S'utilitza Targeta en lloc del Buto base comú per la mida de 90dp la llibertat de columnate type layout structures bounds modifier.
     Card(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
+            .noelReveal()
+            .scale(scale)
             .height(90.dp), // Amplada fixada tipus gran per clicar 
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = containerColor),
