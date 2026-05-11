@@ -22,6 +22,7 @@ import com.noel.energyapp.data.FotoResponse
 import com.noel.energyapp.data.GenericResponse
 import com.noel.energyapp.data.IncidenciaVistaDto
 import com.noel.energyapp.data.LoginRequest
+import com.noel.energyapp.data.NotificacioIncidenciaDto
 import com.noel.energyapp.data.PlantaDto
 import com.noel.energyapp.data.TancarIncidenciaDto
 import com.noel.energyapp.data.UpdatePlantesActivesDto
@@ -130,6 +131,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("plantaId") plantaId: Int? = null // Paràmetre opcional a la URL: ?plantaId=3
     ): Response<List<IncidenciaVistaDto>>
+
+    @GET("incidencia/notificacio/{id}")
+    suspend fun getNotificacioIncidencia(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<NotificacioIncidenciaDto>
 
     // Recupera la fotografia d'una alarma tancada, codificada en format Base64
     @GET("incidencia/foto/{alarmaId}")

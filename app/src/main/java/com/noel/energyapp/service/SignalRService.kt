@@ -92,6 +92,11 @@ class SignalRService : Service() {
 
     // Estableix la connexió amb el hub de SignalR del backend i s'inscriu als events
     private fun startSignalR() {
+        if (hubConnection != null) {
+            Log.d("SignalR", "Connexio SignalR ja inicialitzada.")
+            return
+        }
+
         // Crea el SessionManager per accedir al token JWT guardat localment al dispositiu
         val sessionManager = SessionManager(applicationContext)
 
@@ -118,20 +123,19 @@ class SignalRService : Service() {
                 } else {
                     // Si hi ha sessió, filtra l'alarma per les plantes de l'usuari actual
                     try {
-                        // Demana al servidor les alarmes del token actiu per saber si pertanyen a l'usuari
-                        val response = RetrofitClient.instance.getAlarmesActives("Bearer $token", null)
-                        if (response.isSuccessful) {
-                            // Obté la llista d'alarmes accessibles per a l'usuari autenticat
-                            val alarmesPermeses = response.body() ?: emptyList()
+                        val response = RetrofitClient.instance.getNotificacioIncidencia("Bearer $token", idIncidencia)
+                        val notificacio = response.body()
 
-                            // Comprova si la nova alarma rebuda per SignalR pertany a una planta de l'usuari
-                            if (alarmesPermeses.any { it.id == idIncidencia }) {
-                                // La nova incidència pertany a una planta de l'usuari: mostra la notificació
-                                mostrarNotificacioCritica(idIncidencia)
-                            } else {
-                                // La incidència no és de cap planta de l'usuari: no es notifica
-                                Log.d("SignalR", "Ignorada. L'alarma $idIncidencia no és de cap planta meva.")
-                            }
+                        if (response.isSuccessful && notificacio != null) {
+                            mostrarNotificacioCritica(
+                                id = idIncidencia,
+                                title = notificacio.titol.ifBlank { "Nova Incidencia Detectada" },
+                                body = notificacio.missatge.ifBlank { "S'ha enregistrat l'alarma #$idIncidencia. Obre per revisar-la." }
+                            )
+                        } else if (response.code() == 404) {
+                            Log.d("SignalR", "Ignorada. L'alarma $idIncidencia no es de cap planta meva.")
+                        } else {
+                            mostrarNotificacioCritica(idIncidencia)
                         }
                     } catch (e: Exception) {
                         Log.e("SignalR", "Error filtrant notificació", e)
@@ -150,12 +154,17 @@ class SignalRService : Service() {
             } catch (e: Exception) {
                 // Registra l'error al Logcat sense esfondrar el servei
                 Log.e("SignalR", "Error iniciant el websocket", e)
+                hubConnection = null
             }
         }
     }
 
     // Construeix i mostra una notificació d'alta prioritat per a una incidència nova
-    private fun mostrarNotificacioCritica(id: Int) {
+    private fun mostrarNotificacioCritica(
+        id: Int,
+        title: String = "Nova Incidencia Detectada",
+        body: String = "S'ha enregistrat l'alarma #$id. Obre per revisar-la."
+    ) {
         // Crea la intent per navegar a la MainActivity quan l'usuari toqui la notificació
         val intent = Intent(this, MainActivity::class.java).apply {
             // Tanca totes les activitats al damunt i reinicia la pila de navegació
@@ -167,8 +176,9 @@ class SignalRService : Service() {
         // Construeix la notificació emergent amb tots els seus atributs
         val builder = NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_warning) // Icona d'advertència del sistema
-            .setContentTitle("Nova Incidència Detectada!")    // Títol en negreta de la notificació
-            .setContentText("S'ha enregistrat l'alarma #$id. Obre per revisar-la.") // Cos de la notificació
+            .setContentTitle(title)                            // Titol en negreta de la notificacio
+            .setContentText(body)                              // Cos de la notificacio
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_MAX)     // Prioritat màxima: apareix com a popup (Heads-Up)
             .setDefaults(Notification.DEFAULT_ALL)             // Activa so, vibració i llumeta per defecte
             .setContentIntent(pendingIntent)                   // Acció en tocar: obre la MainActivity
@@ -211,6 +221,7 @@ class SignalRService : Service() {
     override fun onDestroy() {
         // Atura la connexió SignalR de forma neta per alliberar recursos del servidor
         hubConnection?.stop()
+        hubConnection = null
         super.onDestroy() // Crida la implementació base del Service
     }
 

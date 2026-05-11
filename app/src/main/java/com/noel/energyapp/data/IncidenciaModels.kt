@@ -41,6 +41,26 @@ data class IncidenciaVistaDto(
     val consumRealAvui: Double = 0.0        // Consum acumulat avui en el moment de l'alarma (m³)
 )
 
+// Model lleuger que l'API retorna per construir el text de la notificacio Android
+data class NotificacioIncidenciaDto(
+    val id: Int,
+    val idDimCnt: Int,
+    val titol: String = "",
+    val missatge: String = "",
+    val gravetat: String = "",
+    val ubicacio: String = "",
+    val comptador: String = "",
+    val tagName: String = "",
+    val detallAlarma: String = "",
+    val consumRealAvui: Double = 0.0,
+    val limitH: Int? = null,
+    val limitHH: Int? = null,
+    val dataCreacio: String? = null,
+    val horaAvisH: String? = null,
+    val horaCriticHH: String? = null,
+    val nivellActual: Int = 0
+)
+
 // Model que s'envia al servidor quan un tècnic vol tancar una incidència activa
 // Conté la informació del tancament: qui la va resoldre, com i amb una foto opcional
 data class TancarIncidenciaDto(
